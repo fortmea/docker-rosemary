@@ -57,5 +57,6 @@ MISSING=$(grep -E '^CONFIG_' "$HOST/docker.config" | while read -r l; do
 "${M[@]}" Image.gz
 cp "$OUT/.config" "$HOST/docker.built.config"
 cp "$OUT/arch/arm64/boot/Image.gz" "$HOST/Image.gz"
-strings "$OUT/vmlinux" | grep -m1 "Linux version"
+# Sem pipe: com pipefail, "strings | grep -m1" termina em SIGPIPE (141).
+grep -a -o -m1 'Linux version [[:print:]]*' "$OUT/vmlinux"
 echo "Pronto: kernel/Image.gz"
