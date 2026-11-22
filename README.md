@@ -33,7 +33,9 @@ Testado no aparelho com:
    ```sh
    adb shell su -c 'zcat /proc/config.gz' | grep -E 'CONFIG_(SYSVIPC|POSIX_MQUEUE|IPC_NS|CGROUP_PIDS|CGROUP_DEVICE|NETFILTER_XT_MATCH_ADDRTYPE)='
    ```
-   Se faltar alguma das 6 linhas, compile e grave o kernel: [docs/KERNEL.md](docs/KERNEL.md).
+   Se faltar alguma das 6 linhas, compile e grave o kernel com as opções de
+   [`kernel/docker.config`](kernel/docker.config), de forma automática (script em contêiner)
+   ou manual: [docs/KERNEL.md](docs/KERNEL.md).
 2. Baixe `docker-magisk-<versão>.zip` dos Releases e instale pelo app Magisk
    (Módulos → Instalar do armazenamento). O instalador recusa kernels incompatíveis.
 3. Reinicie e teste:
