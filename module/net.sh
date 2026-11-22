@@ -1,9 +1,10 @@
 #!/system/bin/sh
 # Android policy routing for Docker bridge networks.
 # Without these rules forwarded traffic from the bridges hits "32000: unreachable".
-# Covers the whole Docker address pool (daemon.json default-address-pools), so new
-# networks (e.g. AIO's nextcloud-aio) work without per-subnet fixes.
-# 172.28.0.0/16 (Droidspaces) has its own rules at 6090-6100 and is unaffected.
+# Covers the whole Docker address pool (daemon.json default-address-pools: 172.16.0.0/12
+# minus 172.28.0.0/16), so new networks work without per-subnet fixes.
+# 172.28.0.0/16 is left out of the pools because it is Droidspaces' NAT range; Droidspaces
+# installs its own rules at prefs 6090-6100, which take precedence over the ones below.
 POOL=172.16.0.0/12
 IP=/system/bin/ip
 

@@ -4,3 +4,4 @@ version=@DOCKER_VERSION@-@MODULE_REVISION@
 versionCode=@VERSION_CODE@
 author=fortmea
 description=Docker Engine @DOCKER_VERSION@ + Compose v@COMPOSE_VERSION@ (binários estáticos oficiais) para Android com root. Dados em /data/docker. CLI: su -c docker / dockerctl
+updateJson=https://github.com/@REPO@/releases/latest/download/update.json

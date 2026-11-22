@@ -4,7 +4,9 @@
 # empacota tudo com os scripts de module/.
 #
 # Requisitos: bash, curl, tar, zip, go (versão de uidfw/go.mod), sha256sum ou shasum.
-# Saída: out/docker-magisk-<docker>-<rev>.zip e o .sha256 correspondente.
+# Saída: out/docker-magisk-<docker>-<rev>.zip, o .sha256 correspondente e out/update.json
+# (lido pelo app Magisk para avisar de versões novas; publicado em cada release).
+# REPO (padrão: $GITHUB_REPOSITORY ou fortmea/docker-rosemary) define as URLs do update.json.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -15,6 +17,7 @@ CACHE=$ROOT/build/cache
 STAGE=$ROOT/build/stage
 OUT=$ROOT/out
 VERSION=$DOCKER_VERSION-$MODULE_REVISION
+REPO=${REPO:-${GITHUB_REPOSITORY:-fortmea/docker-rosemary}}
 ZIP=$OUT/docker-magisk-$VERSION.zip
 
 sha256() { if command -v sha256sum >/dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d' ' -f1; }
@@ -66,6 +69,7 @@ sed -e "s/@DOCKER_VERSION@/$DOCKER_VERSION/g" \
     -e "s/@COMPOSE_VERSION@/$COMPOSE_VERSION/g" \
     -e "s/@MODULE_REVISION@/$MODULE_REVISION/g" \
     -e "s/@VERSION_CODE@/$VERSION_CODE/g" \
+    -e "s#@REPO@#$REPO#g" \
     "$ROOT/module/module.prop.in" > "$STAGE/module.prop"
 
 chmod 0755 "$STAGE"/bin/* "$STAGE"/cli-plugins/* "$STAGE"/system/bin/* "$STAGE"/*.sh
@@ -73,5 +77,13 @@ chmod 0755 "$STAGE"/bin/* "$STAGE"/cli-plugins/* "$STAGE"/system/bin/* "$STAGE"/
 rm -f "$ZIP"
 (cd "$STAGE" && zip -q -r -X "$ZIP" .)
 (cd "$OUT" && echo "$(sha256 "$ZIP")  ${ZIP##*/}" > "${ZIP##*/}.sha256")
+cat > "$OUT/update.json" <<JSON
+{
+  "version": "$VERSION",
+  "versionCode": $VERSION_CODE,
+  "zipUrl": "https://github.com/$REPO/releases/download/v$VERSION/${ZIP##*/}",
+  "changelog": "https://raw.githubusercontent.com/$REPO/v$VERSION/CHANGELOG.md"
+}
+JSON
 echo "- Pronto: $ZIP"
 cat "$ZIP.sha256"

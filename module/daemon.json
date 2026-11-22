@@ -8,7 +8,12 @@
     ],
     "storage-driver": "overlay2",
     "features": { "containerd-snapshotter": false },
-    "default-address-pools": [ { "base": "172.16.0.0/12", "size": 16 } ],
+    "default-address-pools": [
+        { "base": "172.16.0.0/13", "size": 16 },
+        { "base": "172.24.0.0/14", "size": 16 },
+        { "base": "172.29.0.0/16", "size": 16 },
+        { "base": "172.30.0.0/15", "size": 16 }
+    ],
     "ip-forward-no-drop": true,
     "log-driver": "json-file",
     "log-opts": { "max-size": "10m", "max-file": "3" }

@@ -8,10 +8,11 @@ O projeto tem duas partes:
 
 | Parte | O que é | Onde |
 |---|---|---|
-| **Kernel** | O kernel padrão do LineageOS não tem algumas opções exigidas pelo Docker. Há um fragmento de configuração e um script que compila o kernel a partir do código oficial do LineageOS. | [`kernel/`](kernel/), [docs/KERNEL.md](docs/KERNEL.md) |
+| **Kernel** | O kernel padrão do LineageOS não tem algumas opções exigidas pelo Docker. Há um fragmento de configuração, um script que compila o kernel a partir do código oficial do LineageOS e o kernel já compilado em cada release. | [`kernel/`](kernel/), [docs/KERNEL.md](docs/KERNEL.md) |
 | **Módulo Magisk** | Binários estáticos oficiais do Docker (`download.docker.com`) + Compose + scripts que adaptam o Docker ao Android (mount namespace, rotas, DNS, firewall eBPF). | [`module/`](module/), [`uidfw/`](uidfw/) |
 
-O zip pronto do módulo está nos [Releases](https://github.com/fortmea/docker-rosemary/releases).
+O zip do módulo e o kernel compilado estão nos [Releases](https://github.com/fortmea/docker-rosemary/releases).
+Depois de instalado, o módulo recebe atualizações pelo próprio app Magisk.
 
 ## Estado
 
@@ -33,9 +34,10 @@ Testado no aparelho com:
    ```sh
    adb shell su -c 'zcat /proc/config.gz' | grep -E 'CONFIG_(SYSVIPC|POSIX_MQUEUE|IPC_NS|CGROUP_PIDS|CGROUP_DEVICE|NETFILTER_XT_MATCH_ADDRTYPE)='
    ```
-   Se faltar alguma das 6 linhas, compile e grave o kernel com as opções de
-   [`kernel/docker.config`](kernel/docker.config), de forma automática (script em contêiner)
-   ou manual: [docs/KERNEL.md](docs/KERNEL.md).
+   Se faltar alguma das 6 linhas, grave um kernel com as opções de
+   [`kernel/docker.config`](kernel/docker.config): o `rosemary-docker-Image.gz` pronto dos
+   Releases, ou compilado por você (script em contêiner ou manual). Veja
+   [docs/KERNEL.md](docs/KERNEL.md).
 2. Baixe `docker-magisk-<versão>.zip` dos Releases e instale pelo app Magisk
    (Módulos → Instalar do armazenamento). O instalador recusa kernels incompatíveis.
 3. Reinicie e teste:
@@ -84,7 +86,8 @@ O Android não é uma distribuição Linux comum; o módulo resolve as diferenç
 - **Roteamento por políticas** — o Android descarta tráfego encaminhado das bridges
   (`32000: unreachable`). `net.sh` adiciona regras `ip rule` para `172.16.0.0/12` (o pool de
   endereços do Docker) apontando para a tabela da conexão ativa, e as reaplica a cada 15 s
-  (reconexões de Wi-Fi recriam as tabelas).
+  (reconexões de Wi-Fi recriam as tabelas). O pool deixa de fora `172.28.0.0/16`, a faixa
+  NAT padrão do Droidspaces, para os dois poderem rodar juntos.
 - **DNS** — `net.sh` mantém `/data/docker/resolv.conf` com os DNS da rede atual
   (`dumpsys connectivity`) e reservas públicas.
 - **Firewall eBPF por UID** — o Android bloqueia tráfego de qualquer UID ≥ 10000 que não seja

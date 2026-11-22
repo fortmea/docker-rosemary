@@ -8,7 +8,7 @@
 | Bootloader desbloqueado | via Mi Unlock (ferramenta da Xiaomi, fora do escopo deste projeto) |
 | LineageOS | testado com LineageOS 24; instale pelo [guia oficial](https://wiki.lineageos.org/devices/rosemary/) |
 | Root | Magisk ≥ 20.4 (testado 31.1). KernelSU e APatch são detectados, mas não testados |
-| PC | `adb` e `fastboot` ([platform-tools](https://developer.android.com/tools/releases/platform-tools)); Docker ou Linux x86_64 para compilar o kernel |
+| PC | `adb` e `fastboot` ([platform-tools](https://developer.android.com/tools/releases/platform-tools)); Docker ou Linux x86_64 só se for compilar o kernel |
 | Espaço | ~250 MB para o módulo + o que suas imagens ocuparem em `/data` |
 
 ## 1. Kernel compatível
@@ -20,7 +20,8 @@ adb shell su -c 'zcat /proc/config.gz' | grep -E 'CONFIG_(SYSVIPC|POSIX_MQUEUE|I
 ```
 
 As 6 linhas devem aparecer com `=y`. No LineageOS padrão elas faltam: siga
-[KERNEL.md](KERNEL.md) para compilar e gravar o kernel e volte aqui.
+[KERNEL.md](KERNEL.md) para baixar o kernel pronto dos Releases (ou compilar) e gravá-lo, e
+volte aqui.
 
 ## 2. Módulo Magisk
 
@@ -33,6 +34,9 @@ As 6 linhas devem aparecer com `=y`. No LineageOS padrão elas faltam: siga
 3. Magisk → Módulos → Instalar do armazenamento → escolha o zip.
    Alternativa por linha de comando: `adb shell su -c 'magisk --install-module /sdcard/Download/docker-magisk-<versão>.zip'`
 4. Reinicie.
+
+Versões novas aparecem em Magisk → Módulos (botão **Atualizar**) a partir do 29.10.0-4.
+Quem tem o 29.10.0-3 instala o zip novo à mão uma vez.
 
 **Opção B — compilar o zip**
 

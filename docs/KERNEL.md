@@ -11,11 +11,14 @@ opções, sem as quais o Docker não inicia ou não cria redes:
 
 **O arquivo de configurações é [`kernel/docker.config`](../kernel/docker.config)**: um
 fragmento de Kconfig com essas opções e algumas recomendadas, cada uma comentada. Nenhum
-patch de código é necessário, só configuração. Você pode compilar de duas formas:
+patch de código é necessário, só configuração. Você pode baixar o kernel pronto ou compilar:
 
-- **[Automática](#1a-compilação-automática-contêiner)**: `kernel/build.sh` baixa o código e o
+- **[Pronto](#1c-kernel-pronto-dos-releases)**: cada release traz o `Image.gz` compilado
+  pelo CI a partir do branch `lineage-24.0` com esse fragmento. É o caminho mais rápido.
+
+- **[Compilação automática](#1a-compilação-automática-contêiner)**: `kernel/build.sh` baixa o código e o
   compilador, aplica o fragmento, confere e compila. É o caminho testado.
-- **[Manual](#1b-compilação-manual)**: os mesmos passos à mão, em qualquer árvore de kernel
+- **[Compilação manual](#1b-compilação-manual)**: os mesmos passos à mão, em qualquer árvore de kernel
   (outra ROM, outro aparelho, um kernel customizado que você já usa).
 
 ## Código de terceiros usado
@@ -31,8 +34,8 @@ Nada disso é redistribuído aqui; o script baixa direto das fontes oficiais:
 Não há componentes proprietários envolvidos: o boot que você vai reempacotar é o do seu
 próprio aparelho, e o ramdisk, DTB e cmdline dele são mantidos.
 
-> **Por que não há `boot.img` pronto nos releases?** O boot contém o ramdisk da sua build do
-> LineageOS e do seu Magisk; um boot de outra pessoa pode não iniciar. Trocar só o kernel
+> **Por que só o kernel, e não um `boot.img` pronto?** O boot contém o ramdisk da sua build
+> do LineageOS e do seu Magisk; um boot de outra pessoa pode não iniciar. Trocar só o kernel
 > dentro do seu boot é mais seguro.
 
 ## 1a. Compilação automática (contêiner)
@@ -136,6 +139,34 @@ defconfig (`arch/arm64/configs/rosemary_defconfig`) e rode `$MK rosemary_defconf
 um kernel já em execução, `zcat /proc/config.gz > out/.config` é uma base, mas só use se
 tiver certeza de que é do mesmo código-fonte.
 
+## 1c. Kernel pronto dos Releases
+
+Cada [release](https://github.com/fortmea/docker-rosemary/releases) inclui:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `rosemary-docker-Image.gz` | kernel compilado pelo [workflow de release](../.github/workflows/release.yml) com o mesmo contêiner da compilação automática |
+| `rosemary-docker.config` | configuração completa usada (`.config`) |
+| `rosemary-docker-kernel.sha256` | SHA-256 dos dois |
+| `rosemary-docker-kernel-COPYING` | licença do kernel (GPL-2.0), copiada da árvore compilada |
+
+As notas do release dizem de qual commit do `lineage-24.0` ele foi compilado. Ele serve
+para o LineageOS 24 do rosemary; se a sua build for bem mais antiga ou mais nova que esse
+commit, leia [Kernel e módulos do vendor](#kernel-e-módulos-do-vendor) e, se algo do
+hardware falhar, compile você mesmo com o commit certo.
+
+```sh
+B=https://github.com/fortmea/docker-rosemary/releases/latest/download
+curl -fLO $B/rosemary-docker-Image.gz -fLO $B/rosemary-docker.config -fLO $B/rosemary-docker-kernel.sha256
+shasum -a 256 -c rosemary-docker-kernel.sha256
+mkdir -p kernel && mv rosemary-docker-Image.gz kernel/Image.gz
+```
+
+Siga para o passo 2 (os comandos usam `kernel/Image.gz`).
+
+Código-fonte correspondente: o repositório do LineageOS no commit indicado nas notas, mais
+`rosemary-docker.config` (veja [THIRD_PARTY.md](../THIRD_PARTY.md)).
+
 ## 2. Reempacotar o boot (no aparelho)
 
 O aparelho é A/B; trabalhe com o slot ativo. Os comandos abaixo mantêm o ramdisk do Magisk,
@@ -199,8 +230,8 @@ A OTA grava um boot novo (com o kernel padrão) no outro slot. Depois de atualiz
 
 1. Reinstale o Magisk no boot novo, se ainda não fez (Magisk → Instalar → "Instalar no slot
    inativo" antes de reiniciar, ou pelo método normal após a atualização).
-2. Recompile o kernel (o script já puxa o último commit do branch) e repita os passos 2 e 3
-   com o boot do novo slot ativo.
+2. Baixe o kernel do release mais recente (ou recompile: o script já puxa o último commit
+   do branch) e repita os passos 2 e 3 com o boot do novo slot ativo.
 
 Até lá, o módulo Docker fica instalado, mas o `dockerd` não inicia (veja `dockerctl logs`).
 

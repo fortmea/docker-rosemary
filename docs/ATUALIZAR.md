@@ -10,8 +10,11 @@ download. Os binários vêm sempre das fontes oficiais:
 
 ## Para usuários: instalar uma versão nova
 
-1. Baixe o zip novo nos [Releases](https://github.com/fortmea/docker-rosemary/releases).
-2. Instale por cima pelo Magisk (não precisa remover o antigo) e reinicie.
+Magisk → Módulos → **Atualizar** no módulo Docker, e reinicie (a partir do 29.10.0-4; o
+app consulta o `update.json` do último release).
+
+Ou à mão: baixe o zip novo nos [Releases](https://github.com/fortmea/docker-rosemary/releases),
+instale por cima pelo Magisk (não precisa remover o antigo) e reinicie.
 
 Imagens, volumes, contêineres e `/data/docker/daemon.json` são mantidos. Contêineres com
 política `restart` voltam sozinhos.
@@ -64,8 +67,8 @@ Depois:
 2. Adicione a seção da versão no [`CHANGELOG.md`](../CHANGELOG.md) (o título deve ser
    `## [<docker>-<rev>]`, por exemplo `## [29.11.0-1]`).
 3. Abra um PR. Depois do merge, crie a tag — o workflow
-   [`release.yml`](../.github/workflows/release.yml) compila o zip e publica o release com
-   as notas do changelog:
+   [`release.yml`](../.github/workflows/release.yml) compila o kernel (~40 min) e o zip e
+   publica o release com as notas do changelog e o `update.json` que o app Magisk lê:
    ```sh
    git tag v29.11.0-1 && git push origin v29.11.0-1
    ```

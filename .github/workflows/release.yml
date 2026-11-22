@@ -8,7 +8,41 @@ permissions:
   contents: write
 
 jobs:
+  kernel:
+    # Kernel do LineageOS + kernel/docker.config, compilado pelo mesmo contêiner de
+    # docs/KERNEL.md. Só o Image.gz é publicado (o boot.img de cada um tem ramdisk próprio).
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar
+        run: |
+          set -o pipefail
+          docker build -t rosemary-kernel-builder kernel
+          mkdir -p "$RUNNER_TEMP/kwork"
+          docker run --rm -v "$RUNNER_TEMP/kwork":/work -v "$PWD/kernel":/host \
+            rosemary-kernel-builder | tee kernel/build.log
+      - name: Preparar arquivos
+        run: |
+          set -euo pipefail
+          src=$(sed -n 's/^Kernel: //p' kernel/build.log)
+          ver=$(grep -m1 -o 'Linux version [^ ]*' kernel/build.log | cut -d' ' -f3)
+          mkdir dist
+          cp kernel/Image.gz dist/rosemary-docker-Image.gz
+          cp kernel/docker.built.config dist/rosemary-docker.config
+          cp "$RUNNER_TEMP/kwork/kernel/COPYING" dist/rosemary-docker-kernel-COPYING
+          (cd dist && sha256sum rosemary-docker-Image.gz rosemary-docker.config > rosemary-docker-kernel.sha256)
+          # shellcheck disable=SC2016 # crases são markdown literal
+          printf 'Kernel `%s` — LineageOS/android_kernel_xiaomi_mt6785 %s (commit `%s`) + kernel/docker.config.\n' \
+            "$ver" "${src%% @*}" "$(echo "${src#*@ }" | cut -d' ' -f1)" > dist/kernel-notes.md
+          cat dist/kernel-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: dist/
+
   release:
+    needs: kernel
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,9 +70,20 @@ jobs:
           NOTES
       - name: Montar o módulo
         run: scripts/build-module.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: kernel
+          path: kernel-dist
+      - name: Notas do kernel
+        run: |
+          cat >> notes.md <<NOTES
+
+          **Kernel pronto:** \`rosemary-docker-Image.gz\` — $(cat kernel-dist/kernel-notes.md) Grave só o kernel dentro do boot do seu aparelho, nunca um boot.img de outra pessoa: [docs/KERNEL.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/KERNEL.md#1c-kernel-pronto-dos-releases). \`rosemary-docker.config\` é a configuração completa usada.
+          NOTES
+          rm kernel-dist/kernel-notes.md
       - name: Publicar
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" out/*.zip out/*.sha256 \
+          gh release create "$GITHUB_REF_NAME" out/*.zip out/*.sha256 out/update.json kernel-dist/* \
             --title "Docker ${GITHUB_REF_NAME#v}" --notes-file notes.md --verify-tag

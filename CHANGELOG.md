@@ -5,6 +5,20 @@ seguem `<versão do Docker>-<revisão do módulo>`.
 
 ## [Não lançado]
 
+## [29.10.0-4] - 2026-11-22
+
+### Incluído
+- Atualização pelo app Magisk: `updateJson` no `module.prop` e `update.json` publicado em
+  cada release.
+- Kernel compilado nos releases (`rosemary-docker-Image.gz`, `.config`, SHA-256 e licença),
+  feito pelo workflow de release com o mesmo contêiner de `kernel/build.sh`.
+
+### Alterado
+- O pool de redes do Docker deixa de fora `172.28.0.0/16` (faixa NAT padrão do Droidspaces).
+  Vale só para instalações novas: o `daemon.json` existente não é sobrescrito. Numa
+  instalação antiga, copie `default-address-pools` do `daemon.json` do módulo para
+  `/data/docker/daemon.json` e rode `dockerctl restart`.
+
 ## [29.10.0-3] - 2026-11-22
 
 Primeiro release público.
@@ -21,5 +35,6 @@ Primeiro release público.
 - Scripts de montagem (`scripts/build-module.sh`) e atualização de versões
   (`scripts/bump-versions.sh`), CI e release automático.
 
-[Não lançado]: https://github.com/fortmea/docker-rosemary/compare/v29.10.0-3...HEAD
+[Não lançado]: https://github.com/fortmea/docker-rosemary/compare/v29.10.0-4...HEAD
+[29.10.0-4]: https://github.com/fortmea/docker-rosemary/compare/v29.10.0-3...v29.10.0-4
 [29.10.0-3]: https://github.com/fortmea/docker-rosemary/releases/tag/v29.10.0-3
