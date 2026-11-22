@@ -1,0 +1,31 @@
+name: Relato de outro aparelho
+description: Funcionou (ou não) em um aparelho que não é o rosemary
+labels: [device-report]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Aparelho e codinome
+    validations:
+      required: true
+  - type: input
+    id: rom
+    attributes:
+      label: ROM, versão do Android e kernel (`uname -r`)
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Resultado
+      options:
+        - Funciona sem mudanças
+        - Funciona com kernel customizado
+        - Não funciona
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Detalhes
+      description: O que foi preciso mudar, o que falhou, logs relevantes.

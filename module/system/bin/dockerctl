@@ -1,0 +1,63 @@
+#!/system/bin/sh
+# Docker service control for the Magisk "docker" module.
+M=/data/adb/modules/docker
+D=/data/docker
+SOCK=$D/run/docker.sock
+PIDF=$D/run/dockerd.pid
+LOG=$D/log/dockerd.log
+
+[ "$(id -u)" = 0 ] || exec su -c "$0 $*"
+. "$M/common.sh"
+
+cli() { DOCKER_HOST=unix://$SOCK DOCKER_CONFIG=$D/cli "$M/bin/docker" "$@"; }
+alive() { cli version >/dev/null 2>&1; }
+pid() { p=$(cat "$PIDF" 2>/dev/null) && [ -n "$p" ] && kill -0 "$p" 2>/dev/null && echo "$p"; }
+
+start() {
+    alive && { echo "Docker já está rodando."; return 0; }
+    [ -n "$(pid)" ] && { echo "dockerd (PID $(pid)) existe mas não responde. Veja: dockerctl logs" >&2; return 1; }
+    mkdir -p "$D/lib" "$D/run" "$D/log" "$D/rootfs" "$D/cli/cli-plugins"
+    [ -f "$D/daemon.json" ] || cp "$M/daemon.json" "$D/daemon.json"
+    ln -sf "$M/cli-plugins/docker-compose" "$D/cli/cli-plugins/docker-compose"
+    rm -f "$SOCK" "$PIDF"
+    [ -f "$LOG" ] && mv "$LOG" "$LOG.old"
+    sh "$M/net.sh"
+    nohup "$BB" unshare -m sh "$M/nsroot.sh" >> "$LOG" 2>&1 </dev/null &
+    i=0
+    while [ $i -lt 60 ]; do
+        alive && { echo "Docker iniciado."; return 0; }
+        sleep 1; i=$((i + 1))
+    done
+    echo "Docker não respondeu em 60 s. Últimas linhas do log:" >&2
+    tail -n 20 "$LOG" >&2
+    return 1
+}
+
+stop() {
+    p=$(pid) || { echo "Docker não está rodando."; return 0; }
+    echo "Parando Docker (PID $p)..."
+    kill -TERM "$p"
+    i=0
+    while [ $i -lt 90 ]; do
+        kill -0 "$p" 2>/dev/null || { echo "Docker parado."; return 0; }
+        sleep 1; i=$((i + 1))
+    done
+    echo "dockerd não parou em 90 s." >&2
+    return 1
+}
+
+case "${1:-status}" in
+    start) start ;;
+    stop) stop ;;
+    restart) stop && start ;;
+    status)
+        if alive; then
+            echo "Docker rodando (PID $(pid)). Socket: $SOCK"
+            cli ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+        else
+            echo "Docker parado."; exit 1
+        fi ;;
+    logs) tail -n "${2:-100}" "$LOG" ;;
+    net) sh "$M/net.sh" && echo "Regras de rede aplicadas." ;;
+    *) echo "Uso: dockerctl {start|stop|restart|status|logs [n]|net}"; exit 2 ;;
+esac

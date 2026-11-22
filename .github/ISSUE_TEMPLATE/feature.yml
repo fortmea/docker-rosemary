@@ -1,0 +1,24 @@
+name: Sugestão
+description: Nova funcionalidade ou melhoria
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Que necessidade isto resolve? O que você tentou fazer e não conseguiu?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Como você imagina a solução? Alternativas consideradas?
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribuição
+      options:
+        - label: Posso implementar e testar no aparelho

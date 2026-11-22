@@ -1,0 +1,15 @@
+{
+    "data-root": "/data/docker/lib",
+    "exec-root": "/run/docker",
+    "pidfile": "/data/docker/run/dockerd.pid",
+    "hosts": [
+        "unix:///run/docker.sock",
+        "unix:///data/docker/run/docker.sock"
+    ],
+    "storage-driver": "overlay2",
+    "features": { "containerd-snapshotter": false },
+    "default-address-pools": [ { "base": "172.16.0.0/12", "size": 16 } ],
+    "ip-forward-no-drop": true,
+    "log-driver": "json-file",
+    "log-opts": { "max-size": "10m", "max-file": "3" }
+}

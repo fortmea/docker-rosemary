@@ -1,0 +1,5 @@
+#!/system/bin/sh
+[ "$(id -u)" = 0 ] || { echo "docker: rode como root (su -c docker ...)" >&2; exit 1; }
+export DOCKER_HOST="${DOCKER_HOST:-unix:///data/docker/run/docker.sock}"
+export DOCKER_CONFIG="${DOCKER_CONFIG:-/data/docker/cli}"
+exec /data/adb/modules/docker/bin/docker "$@"

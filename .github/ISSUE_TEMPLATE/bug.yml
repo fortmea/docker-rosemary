@@ -1,0 +1,72 @@
+name: Bug
+description: Algo não funciona como documentado
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de abrir, confira [docs/PROBLEMAS.md](https://github.com/fortmea/docker-rosemary/blob/main/docs/PROBLEMAS.md) e as issues existentes.
+        **Não cole senhas, tokens ou dados pessoais** nos logs.
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu
+      description: O que você fez, o que esperava e o que aconteceu. Inclua o comando exato e a mensagem de erro.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Aparelho
+      description: "Saída de `getprop ro.product.device` e modelo"
+      placeholder: rosemary (Redmi Note 10S)
+    validations:
+      required: true
+  - type: input
+    id: rom
+    attributes:
+      label: ROM e versão
+      description: "Ex.: LineageOS 24 nightly 20261104 (`getprop ro.lineage.version`)"
+    validations:
+      required: true
+  - type: input
+    id: root
+    attributes:
+      label: Gerenciador de root e versão
+      placeholder: Magisk 31.1
+    validations:
+      required: true
+  - type: input
+    id: module
+    attributes:
+      label: Versão do módulo
+      description: "`grep version /data/adb/modules/docker/module.prop`"
+      placeholder: 29.10.0-3
+    validations:
+      required: true
+  - type: input
+    id: kernel
+    attributes:
+      label: Kernel
+      description: "`uname -r`"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Diagnóstico
+      description: Saída dos comandos abaixo (como root).
+      render: text
+      value: |
+        # dockerctl status
+        # dockerctl logs 50
+        # tail -20 /data/docker/log/uidfw.log
+        # ip rule show | grep -E '^60(89|10[12]):'
+        # cat /data/docker/resolv.conf
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Mais contexto
+      description: compose.yaml usado (sem segredos), mudanças no daemon.json, outros módulos Magisk de rede/VPN/firewall instalados, etc.

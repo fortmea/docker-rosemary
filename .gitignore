@@ -1,0 +1,4 @@
+build/
+out/
+kernel/Image.gz
+kernel/docker.built.config

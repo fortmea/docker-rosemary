@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: uidfw/go.mod
+          cache: false
+      - name: docker-uidfw
+        working-directory: uidfw
+        run: |
+          go vet ./...
+          go test ./...
+      - name: shellcheck
+        run: |
+          shellcheck -S error -s sh module/*.sh module/system/bin/*
+          shellcheck -S warning scripts/*.sh kernel/build.sh
+      - name: Montar o módulo
+        run: scripts/build-module.sh

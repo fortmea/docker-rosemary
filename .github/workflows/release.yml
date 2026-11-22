@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: uidfw/go.mod
+          cache: false
+      - name: Conferir tag e changelog
+        run: |
+          . ./versions.env
+          VERSION=$DOCKER_VERSION-$MODULE_REVISION
+          [ "$GITHUB_REF_NAME" = "v$VERSION" ] || { echo "::error::tag $GITHUB_REF_NAME não bate com versions.env (v$VERSION)"; exit 1; }
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on && /^\[[^]]+\]: / { exit }
+            on { print }' CHANGELOG.md > notes.md
+          [ -s notes.md ] || { echo "::error::CHANGELOG.md não tem a seção ## [$VERSION]"; exit 1; }
+          cat >> notes.md <<NOTES
+
+          ---
+          **Instalação:** requer kernel com as opções de [kernel/docker.config](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/kernel/docker.config) — veja [docs/INSTALACAO.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/INSTALACAO.md). Instale o zip pelo Magisk e reinicie.
+
+          Docker Engine $DOCKER_VERSION · Docker Compose v$COMPOSE_VERSION · binários oficiais de download.docker.com e github.com/docker/compose ([licenças](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/THIRD_PARTY.md)).
+          NOTES
+      - name: Montar o módulo
+        run: scripts/build-module.sh
+      - name: Publicar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" out/*.zip out/*.sha256 \
+            --title "Docker ${GITHUB_REF_NAME#v}" --notes-file notes.md --verify-tag
