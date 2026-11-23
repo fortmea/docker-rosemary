@@ -26,5 +26,5 @@ jobs:
         run: |
           shellcheck -S error -s sh module/*.sh module/system/bin/*
           shellcheck -S warning scripts/*.sh kernel/build.sh
-      - name: Montar o módulo
+      - name: Build the module
         run: scripts/build-module.sh

@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Problemas frequentes
-    url: https://github.com/fortmea/docker-rosemary/blob/main/docs/PROBLEMAS.md
-    about: Soluções para os erros mais comuns — confira antes de abrir uma issue.
-  - name: Documentação do Docker
+  - name: Troubleshooting / Problemas frequentes
+    url: https://github.com/fortmea/docker-rosemary/blob/main/docs/TROUBLESHOOTING.md
+    about: Fixes for the most common errors; check before opening an issue (português em docs/pt-BR/PROBLEMAS.md).
+  - name: Docker documentation
     url: https://docs.docker.com/
-    about: Dúvidas sobre o Docker em si (não específicas do Android/rosemary).
+    about: Questions about Docker itself (not specific to Android/rosemary).

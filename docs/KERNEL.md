@@ -1,48 +1,49 @@
 # Kernel
 
-O kernel do LineageOS para o rosemary (Linux 4.19, `rosemary_defconfig`) não tem estas
-opções, sem as quais o Docker não inicia ou não cria redes:
+**English** · [Português](pt-BR/KERNEL.md)
 
-| Opção | Para quê |
+The LineageOS kernel for rosemary (Linux 4.19, `rosemary_defconfig`) lacks these options.
+Without them Docker does not start or cannot create networks:
+
+| Option | Why |
 |---|---|
-| `CONFIG_SYSVIPC`, `CONFIG_POSIX_MQUEUE`, `CONFIG_IPC_NS` | namespace IPC de cada contêiner |
-| `CONFIG_CGROUP_PIDS`, `CONFIG_CGROUP_DEVICE` | controladores de cgroup exigidos pelo runc |
-| `CONFIG_NETFILTER_XT_MATCH_ADDRTYPE` | regras iptables de portas publicadas |
+| `CONFIG_SYSVIPC`, `CONFIG_POSIX_MQUEUE`, `CONFIG_IPC_NS` | per-container IPC namespace |
+| `CONFIG_CGROUP_PIDS`, `CONFIG_CGROUP_DEVICE` | cgroup controllers required by runc |
+| `CONFIG_NETFILTER_XT_MATCH_ADDRTYPE` | iptables rules for published ports |
 
-**O arquivo de configurações é [`kernel/docker.config`](../kernel/docker.config)**: um
-fragmento de Kconfig com essas opções e algumas recomendadas, cada uma comentada. Nenhum
-patch de código é necessário, só configuração. Você pode baixar o kernel pronto ou compilar:
+**The configuration file is [`kernel/docker.config`](../kernel/docker.config)**: a Kconfig
+fragment with these options and a few recommended ones, each commented. No code patch is
+needed, only configuration. You can download the prebuilt kernel or build it:
 
-- **[Pronto](#1c-kernel-pronto-dos-releases)**: cada release traz o `Image.gz` compilado
-  pelo CI a partir do branch `lineage-24.0` com esse fragmento. É o caminho mais rápido.
+- **[Prebuilt](#1c-prebuilt-kernel-from-releases)**: every release ships an `Image.gz` built
+  by CI from the `lineage-24.0` branch with this fragment. The fastest path.
+- **[Automatic build](#1a-automatic-build-container)**: `kernel/build.sh` downloads the
+  source and the compiler, applies the fragment, checks it and builds. The tested path.
+- **[Manual build](#1b-manual-build)**: the same steps by hand, on any kernel tree (another
+  ROM, another phone, a custom kernel you already use).
 
-- **[Compilação automática](#1a-compilação-automática-contêiner)**: `kernel/build.sh` baixa o código e o
-  compilador, aplica o fragmento, confere e compila. É o caminho testado.
-- **[Compilação manual](#1b-compilação-manual)**: os mesmos passos à mão, em qualquer árvore de kernel
-  (outra ROM, outro aparelho, um kernel customizado que você já usa).
+## Third-party code used
 
-## Código de terceiros usado
+The script downloads everything from the official sources:
 
-Nada disso é redistribuído aqui; o script baixa direto das fontes oficiais:
-
-| Componente | Origem | Licença |
+| Component | Source | License |
 |---|---|---|
 | Kernel | [LineageOS/android_kernel_xiaomi_mt6785](https://github.com/LineageOS/android_kernel_xiaomi_mt6785), branch `lineage-24.0` | GPL-2.0 |
-| Clang r416183b (o mesmo que o LineageOS usa para este aparelho, `TARGET_KERNEL_CLANG_VERSION`) | [LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b) | Apache-2.0 com exceção LLVM |
-| `magiskboot` (reempacotar o boot) | já incluído no Magisk instalado: `/data/adb/magisk/magiskboot` | GPL-3.0 |
+| Clang r416183b (the one LineageOS uses for this phone, `TARGET_KERNEL_CLANG_VERSION`) | [LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b) | Apache-2.0 with LLVM exception |
+| `magiskboot` (repacking boot) | already part of the installed Magisk: `/data/adb/magisk/magiskboot` | GPL-3.0 |
 
-Não há componentes proprietários envolvidos: o boot que você vai reempacotar é o do seu
-próprio aparelho, e o ramdisk, DTB e cmdline dele são mantidos.
+No proprietary components are involved: the boot image you repack is your own phone's, and
+its ramdisk, DTB and cmdline are kept.
 
-> **Por que só o kernel, e não um `boot.img` pronto?** O boot contém o ramdisk da sua build
-> do LineageOS e do seu Magisk; um boot de outra pessoa pode não iniciar. Trocar só o kernel
-> dentro do seu boot é mais seguro.
+> **Why only the kernel and not a ready `boot.img`?** Boot contains the ramdisk of your
+> LineageOS build and your Magisk; someone else's boot may not boot. Swapping just the kernel
+> inside your own boot is safer.
 
-## 1a. Compilação automática (contêiner)
+## 1a. Automatic build (container)
 
-Precisa de ~15 GB livres e Docker (no macOS com Apple Silicon roda emulado como amd64,
-mais lento — 30 a 90 min). Em um Linux x86_64 dá para rodar `kernel/build.sh` direto
-(instale os pacotes do [`kernel/Dockerfile`](../kernel/Dockerfile) e defina `WORK`/`HOST`).
+Needs ~15 GB free and Docker (on Apple Silicon macOS it runs emulated as amd64, slower:
+30 to 90 min). On Linux x86_64 you can run `kernel/build.sh` directly (install the packages
+from [`kernel/Dockerfile`](../kernel/Dockerfile) and set `WORK`/`HOST`).
 
 ```sh
 cd docker-rosemary/kernel
@@ -50,32 +51,32 @@ docker build -t rosemary-kernel-builder .
 docker run --rm -v rosemary-kernel:/work -v "$PWD":/host rosemary-kernel-builder
 ```
 
-Resultado: `kernel/Image.gz` e `kernel/docker.built.config`. O script falha se alguma
-opção do fragmento não ficar ativa.
+Result: `kernel/Image.gz` and `kernel/docker.built.config`. The script fails if any option
+from the fragment does not end up enabled.
 
-Variáveis (passe com `-e`): `KERNEL_BRANCH` (padrão `lineage-24.0`; use o branch da sua
-versão do LineageOS), `KERNEL_COMMIT` (opcional: um commit específico desse branch) e
-`LOCALVERSION` (padrão `-docker`, aparece em `uname -r`).
-Patches extras (`*.patch`) colocados em `kernel/patches/` são aplicados antes de compilar.
+Variables (pass with `-e`): `KERNEL_BRANCH` (default `lineage-24.0`; use the branch of your
+LineageOS version), `KERNEL_COMMIT` (optional: a specific commit of that branch) and
+`LOCALVERSION` (default `-docker`, shows up in `uname -r`).
+Extra patches (`*.patch`) placed in `kernel/patches/` are applied before building.
 
-O volume `rosemary-kernel` guarda fontes e objetos; recompilações são incrementais e o
-script atualiza o código para o último commit do branch (ou para `KERNEL_COMMIT`).
+The `rosemary-kernel` volume keeps sources and objects; rebuilds are incremental and the
+script updates the source to the latest commit of the branch (or to `KERNEL_COMMIT`).
 
-## 1b. Compilação manual
+## 1b. Manual build
 
-Em Linux x86_64 (Ubuntu/Debian; em outro sistema use o contêiner do `kernel/Dockerfile`
-com `--entrypoint bash`).
+On Linux x86_64 (Ubuntu/Debian; on other systems use the `kernel/Dockerfile` container with
+`--entrypoint bash`).
 
-**Dependências:**
+**Dependencies:**
 
 ```sh
 sudo apt install make bc bison flex libssl-dev libelf-dev python3 cpio kmod git \
     binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi perl xz-utils gzip curl
 ```
 
-**Código e compilador.** Use o branch da sua versão do LineageOS e o clang que a ROM usa
-(`TARGET_KERNEL_CLANG_VERSION` no `BoardConfig.mk` do aparelho; para o rosemary, r416183b).
-Outro clang pode compilar, mas também pode gerar um kernel que não inicia.
+**Source and compiler.** Use the branch of your LineageOS version and the clang the ROM uses
+(`TARGET_KERNEL_CLANG_VERSION` in the device's `BoardConfig.mk`; for rosemary, r416183b).
+Another clang may build, but it may also produce a kernel that does not boot.
 
 ```sh
 git clone --depth 1 -b lineage-24.0 https://github.com/LineageOS/android_kernel_xiaomi_mt6785 kernel
@@ -84,76 +85,75 @@ export PATH=$PWD/clang/bin:$PATH
 cd kernel
 ```
 
-**Configuração.** Parta do defconfig do aparelho e mescle o fragmento:
+**Configuration.** Start from the device defconfig and merge the fragment:
 
 ```sh
 MK="make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 CC=clang \
     CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu-"
 $MK rosemary_defconfig
-scripts/kconfig/merge_config.sh -m -O out out/.config /caminho/para/docker-rosemary/kernel/docker.config
+scripts/kconfig/merge_config.sh -m -O out out/.config /path/to/docker-rosemary/kernel/docker.config
 scripts/config --file out/.config --set-str LOCALVERSION -docker
 $MK olddefconfig
 ```
 
-**Confira se tudo ficou ativo.** `olddefconfig` descarta *sem avisar* opções cujas
-dependências não estão satisfeitas:
+**Check that everything is enabled.** `olddefconfig` *silently* drops options whose
+dependencies are not met:
 
 ```sh
-grep '^CONFIG_' /caminho/para/docker-rosemary/kernel/docker.config | while read -r l; do
-    grep -qxF "$l" out/.config || echo "FALTANDO: $l"; done
+grep '^CONFIG_' /path/to/docker-rosemary/kernel/docker.config | while read -r l; do
+    grep -qxF "$l" out/.config || echo "MISSING: $l"; done
 ```
 
-Se algo faltar, `$MK menuconfig` e procure a opção com `/`: a tela mostra de quais outras
-ela depende (`Depends on:`). Ative as dependências e confira de novo.
+If something is missing, run `$MK menuconfig` and search for the option with `/`: the screen
+shows what it depends on (`Depends on:`). Enable the dependencies and check again.
 
-Opcional: o Docker mantém um verificador completo que classifica cada opção como
-obrigatória ou opcional:
+Optional: Docker maintains a full checker that classifies each option as required or
+optional:
 
 ```sh
 curl -fsSLO https://raw.githubusercontent.com/moby/moby/master/contrib/check-config.sh
 bash check-config.sh out/.config
 ```
 
-O script é feito para distribuições Linux comuns, então num kernel Android algumas opções
-aparecem como `missing` sem impedir o Docker de rodar (por exemplo drivers de armazenamento
-que o módulo não usa, `VXLAN`/`IP_VS` do Swarm). Use-o para descobrir o que falta e decidir;
-o critério deste projeto é o `docker.config` e o
-[checklist de teste](../CONTRIBUTING.md#checklist-de-teste-no-aparelho).
+That script targets regular Linux distributions, so on an Android kernel some options show up
+as `missing` without stopping Docker from running (for example storage drivers the module
+does not use, or Swarm's `VXLAN`/`IP_VS`). Use it to find what is missing and decide; this
+project's criteria are `docker.config` and the
+[on-device test checklist](../CONTRIBUTING.md#on-device-test-checklist).
 
-**Compilar:**
+**Build:**
 
 ```sh
 $MK -j"$(nproc)" Image.gz
 ls -l out/arch/arm64/boot/Image.gz
 ```
 
-**Adaptar a outro aparelho ou kernel**: troque o repositório, o branch, o defconfig e o
-clang pelos da sua ROM (todos estão no `BoardConfig.mk` da árvore do aparelho:
-`TARGET_KERNEL_SOURCE`, `TARGET_KERNEL_CONFIG`, `TARGET_KERNEL_CLANG_VERSION`,
-`BOARD_KERNEL_IMAGE_NAME`). O fragmento `docker.config` é o mesmo. Em kernels 5.x/GKI
-várias opções já vêm ativas e algumas mudaram de nome; o `check-config.sh` mostra o que
-falta.
+**Adapting to another phone or kernel**: swap the repository, branch, defconfig and clang for
+your ROM's (all of them are in the device tree's `BoardConfig.mk`: `TARGET_KERNEL_SOURCE`,
+`TARGET_KERNEL_CONFIG`, `TARGET_KERNEL_CLANG_VERSION`, `BOARD_KERNEL_IMAGE_NAME`). The
+`docker.config` fragment is the same. On 5.x/GKI kernels many options are already on and some
+were renamed; `check-config.sh` shows what is missing.
 
-**Alternativa sem `merge_config.sh`**: acrescente as linhas do fragmento ao final do
-defconfig (`arch/arm64/configs/rosemary_defconfig`) e rode `$MK rosemary_defconfig`. Para
-um kernel já em execução, `zcat /proc/config.gz > out/.config` é uma base, mas só use se
-tiver certeza de que é do mesmo código-fonte.
+**Alternative without `merge_config.sh`**: append the fragment's lines to the defconfig
+(`arch/arm64/configs/rosemary_defconfig`) and run `$MK rosemary_defconfig`. For a running
+kernel, `zcat /proc/config.gz > out/.config` is a starting point, but only use it if you are
+sure it comes from the same source.
 
-## 1c. Kernel pronto dos Releases
+## 1c. Prebuilt kernel from Releases
 
-Cada [release](https://github.com/fortmea/docker-rosemary/releases) inclui:
+Every [release](https://github.com/fortmea/docker-rosemary/releases) includes:
 
-| Arquivo | Conteúdo |
+| File | Contents |
 |---|---|
-| `rosemary-docker-Image.gz` | kernel compilado pelo [workflow de release](../.github/workflows/release.yml) com o mesmo contêiner da compilação automática |
-| `rosemary-docker.config` | configuração completa usada (`.config`) |
-| `rosemary-docker-kernel.sha256` | SHA-256 dos dois |
-| `rosemary-docker-kernel-COPYING` | licença do kernel (GPL-2.0), copiada da árvore compilada |
+| `rosemary-docker-Image.gz` | kernel built by the [release workflow](../.github/workflows/release.yml) with the same container as the automatic build |
+| `rosemary-docker.config` | the full configuration used (`.config`) |
+| `rosemary-docker-kernel.sha256` | SHA-256 of both |
+| `rosemary-docker-kernel-COPYING`, `rosemary-docker-kernel-GPL-2.0`, `rosemary-docker-kernel-Linux-syscall-note` | the kernel license, copied from the built tree (the last two from release 29.10.0-5 on) |
 
-As notas do release dizem de qual commit do `lineage-24.0` ele foi compilado. Ele serve
-para o LineageOS 24 do rosemary; se a sua build for bem mais antiga ou mais nova que esse
-commit, leia [Kernel e módulos do vendor](#kernel-e-módulos-do-vendor) e, se algo do
-hardware falhar, compile você mesmo com o commit certo.
+The release notes say which `lineage-24.0` commit it was built from. It is meant for LineageOS
+24 on rosemary; if your build is much older or newer than that commit, read
+[Kernel and vendor modules](#kernel-and-vendor-modules) and, if some hardware fails, build
+it yourself from the right commit.
 
 ```sh
 B=https://github.com/fortmea/docker-rosemary/releases/latest/download
@@ -162,34 +162,35 @@ shasum -a 256 -c rosemary-docker-kernel.sha256
 mkdir -p kernel && mv rosemary-docker-Image.gz kernel/Image.gz
 ```
 
-Siga para o passo 2 (os comandos usam `kernel/Image.gz`).
+Continue with step 2 (the commands use `kernel/Image.gz`).
 
-Código-fonte correspondente: o repositório do LineageOS no commit indicado nas notas, mais
-`rosemary-docker.config` (veja [THIRD_PARTY.md](../THIRD_PARTY.md)).
+Corresponding source: the LineageOS repository at the commit given in the release notes, plus
+`rosemary-docker.config` (see [THIRD_PARTY.md](../THIRD_PARTY.md)).
 
-## 2. Reempacotar o boot (no aparelho)
+## 2. Repack boot (on the phone)
 
-O aparelho é A/B; trabalhe com o slot ativo. Os comandos abaixo mantêm o ramdisk do Magisk,
-então o root continua funcionando.
+The phone is A/B; work with the active slot. These commands keep Magisk's ramdisk, so root
+keeps working.
 
 ```sh
 adb push kernel/Image.gz /data/local/tmp/
 adb shell
 su
 cd /data/local/tmp
-S=$(getprop ro.boot.slot_suffix)            # _a ou _b
+S=$(getprop ro.boot.slot_suffix)            # _a or _b
 dd if=/dev/block/by-name/boot$S of=boot$S-backup.img
 mkdir -p kr && cd kr
 /data/adb/magisk/magiskboot unpack ../boot$S-backup.img
-/data/adb/magisk/magiskboot decompress ../Image.gz kernel   # substitui o kernel extraído
+/data/adb/magisk/magiskboot decompress ../Image.gz kernel   # replaces the extracted kernel
 /data/adb/magisk/magiskboot repack ../boot$S-backup.img ../boot$S-docker.img
 cd .. && rm -rf kr
 exit; exit
 ```
 
-`repack` recomprime o kernel no formato original e mantém DTB, ramdisk e cmdline.
+`repack` recompresses the kernel in the original format and keeps DTB, ramdisk and cmdline.
 
-**Copie o backup para o PC** antes de continuar (é o que salva o aparelho se não iniciar):
+**Copy the backup to your computer** before going on (it is what saves the phone if it does
+not boot):
 
 ```sh
 S=$(adb shell getprop ro.boot.slot_suffix | tr -d '\r')
@@ -197,7 +198,7 @@ adb pull /data/local/tmp/boot$S-backup.img
 adb pull /data/local/tmp/boot$S-docker.img
 ```
 
-## 3. Gravar
+## 3. Flash
 
 ```sh
 adb reboot bootloader
@@ -205,42 +206,42 @@ fastboot flash boot$S boot$S-docker.img
 fastboot reboot
 ```
 
-Confira depois de iniciar:
+Check after it boots:
 
 ```sh
-adb shell uname -r                                            # termina em -docker
+adb shell uname -r                                            # contains -docker
 adb shell su -c 'zcat /proc/config.gz' | grep -c -E 'CONFIG_(SYSVIPC|POSIX_MQUEUE|IPC_NS|CGROUP_PIDS|CGROUP_DEVICE|NETFILTER_XT_MATCH_ADDRTYPE)=y'   # 6
 ```
 
-Teste também Wi-Fi, chamadas, câmera e carregamento antes de seguir.
+Also test Wi-Fi, calls, camera and charging before moving on.
 
-## Reverter
+## Revert
 
-Se o aparelho não iniciar (ou algo do hardware parar de funcionar), entre no fastboot
-(desligado: **Volume −** + **Power**) e grave o backup:
+If the phone does not boot (or some hardware stops working), enter fastboot (powered off:
+**Volume −** + **Power**) and flash the backup:
 
 ```sh
 fastboot flash boot$S boot$S-backup.img
 fastboot reboot
 ```
 
-## Após uma atualização do LineageOS
+## After a LineageOS update
 
-A OTA grava um boot novo (com o kernel padrão) no outro slot. Depois de atualizar:
+The OTA writes a new boot (with the stock kernel) to the other slot. After updating:
 
-1. Reinstale o Magisk no boot novo, se ainda não fez (Magisk → Instalar → "Instalar no slot
-   inativo" antes de reiniciar, ou pelo método normal após a atualização).
-2. Baixe o kernel do release mais recente (ou recompile: o script já puxa o último commit
-   do branch) e repita os passos 2 e 3 com o boot do novo slot ativo.
+1. Reinstall Magisk on the new boot if you have not yet (Magisk → Install → "Install to
+   inactive slot" before rebooting, or the normal method after the update).
+2. Download the kernel from the latest release (or rebuild: the script already pulls the
+   latest commit of the branch) and repeat steps 2 and 3 with the boot of the new active slot.
 
-Até lá, o módulo Docker fica instalado, mas o `dockerd` não inicia (veja `dockerctl logs`).
+Until then the Docker module stays installed, but `dockerd` does not start (see `dockerctl logs`).
 
-## Kernel e módulos do vendor
+## Kernel and vendor modules
 
-O kernel tem `CONFIG_MODVERSIONS`; módulos `.ko` carregados pelo vendor precisam bater com o
-kernel. Compilar a partir do mesmo branch e de um commit próximo ao da sua build evita
-problemas. Se depois de gravar algo deixar de funcionar (Wi-Fi, áudio, sensores), reverta e
-compile o commit mais próximo da data da sua build (veja o histórico em
+The kernel has `CONFIG_MODVERSIONS`; `.ko` modules loaded by the vendor must match the kernel.
+Building from the same branch and a commit close to your build's avoids problems. If
+something stops working after flashing (Wi-Fi, audio, sensors), revert and build the commit
+closest to your build's date (see the history at
 [github.com/LineageOS/android_kernel_xiaomi_mt6785/commits/lineage-24.0](https://github.com/LineageOS/android_kernel_xiaomi_mt6785/commits/lineage-24.0)):
 
 ```sh

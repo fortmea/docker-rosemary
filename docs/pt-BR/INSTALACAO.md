@@ -1,5 +1,7 @@
 # Instalação
 
+[English](../INSTALL.md) · **Português**
+
 ## Pré-requisitos
 
 | Item | Observação |
@@ -38,9 +40,15 @@ volte aqui.
 Versões novas aparecem em Magisk → Módulos (botão **Atualizar**) a partir do 29.10.0-4.
 Quem tem o 29.10.0-3 instala o zip novo à mão uma vez.
 
-**Opção B — compilar o zip**
+**Opção B — MMRL**
 
-Requisitos no PC: `bash`, `curl`, `tar`, `zip` e Go (versão de [`uidfw/go.mod`](../uidfw/go.mod)).
+No [MMRL](https://github.com/MMRLApp/MMRL), vá em Repositórios → Adicionar e informe
+`https://fortmea.github.io/docker-rosemary/`. O módulo **Docker** aparece na lista e o MMRL
+cuida da instalação e das atualizações.
+
+**Opção C — compilar o zip**
+
+Requisitos no PC: `bash`, `curl`, `tar`, `zip` e Go (versão de [`uidfw/go.mod`](../../uidfw/go.mod)).
 
 ```sh
 git clone https://github.com/fortmea/docker-rosemary

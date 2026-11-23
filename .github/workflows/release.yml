@@ -9,20 +9,20 @@ permissions:
 
 jobs:
   kernel:
-    # Kernel do LineageOS + kernel/docker.config, compilado pelo mesmo contêiner de
-    # docs/KERNEL.md. Só o Image.gz é publicado (o boot.img de cada um tem ramdisk próprio).
+    # LineageOS kernel + kernel/docker.config, built by the same container as docs/KERNEL.md.
+    # Only Image.gz is published (everyone's boot.img has its own ramdisk).
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - name: Compilar
+      - name: Build
         run: |
           set -o pipefail
           docker build -t rosemary-kernel-builder kernel
           mkdir -p "$RUNNER_TEMP/kwork"
           docker run --rm -v "$RUNNER_TEMP/kwork":/work -v "$PWD/kernel":/host \
             rosemary-kernel-builder | tee kernel/build.log
-      - name: Preparar arquivos
+      - name: Collect files
         run: |
           set -euo pipefail
           src=$(sed -n 's/^Kernel: //p' kernel/build.log)
@@ -30,10 +30,14 @@ jobs:
           mkdir dist
           cp kernel/Image.gz dist/rosemary-docker-Image.gz
           cp kernel/docker.built.config dist/rosemary-docker.config
-          cp "$RUNNER_TEMP/kwork/kernel/COPYING" dist/rosemary-docker-kernel-COPYING
+          # COPYING only points at LICENSES/; ship the full texts it refers to.
+          K=$RUNNER_TEMP/kwork/kernel
+          cp "$K/COPYING" dist/rosemary-docker-kernel-COPYING
+          cp "$K/LICENSES/preferred/GPL-2.0" dist/rosemary-docker-kernel-GPL-2.0
+          cp "$K/LICENSES/exceptions/Linux-syscall-note" dist/rosemary-docker-kernel-Linux-syscall-note
           (cd dist && sha256sum rosemary-docker-Image.gz rosemary-docker.config > rosemary-docker-kernel.sha256)
-          # shellcheck disable=SC2016 # crases são markdown literal
-          printf 'Kernel `%s` — LineageOS/android_kernel_xiaomi_mt6785 %s (commit `%s`) + kernel/docker.config.\n' \
+          # shellcheck disable=SC2016 # backticks are literal markdown
+          printf 'Kernel `%s`, built from LineageOS/android_kernel_xiaomi_mt6785 %s (commit `%s`) + kernel/docker.config.\n' \
             "$ver" "${src%% @*}" "$(echo "${src#*@ }" | cut -d' ' -f1)" > dist/kernel-notes.md
           cat dist/kernel-notes.md
       - uses: actions/upload-artifact@v4
@@ -50,40 +54,49 @@ jobs:
         with:
           go-version-file: uidfw/go.mod
           cache: false
-      - name: Conferir tag e changelog
+      - name: Check tag and changelog
         run: |
           . ./versions.env
           VERSION=$DOCKER_VERSION-$MODULE_REVISION
-          [ "$GITHUB_REF_NAME" = "v$VERSION" ] || { echo "::error::tag $GITHUB_REF_NAME não bate com versions.env (v$VERSION)"; exit 1; }
+          [ "$GITHUB_REF_NAME" = "v$VERSION" ] || { echo "::error::tag $GITHUB_REF_NAME does not match versions.env (v$VERSION)"; exit 1; }
           awk -v v="$VERSION" '
             $0 ~ "^## \\[" v "\\]" { on = 1; next }
             on && /^## \[/ { exit }
             on && /^\[[^]]+\]: / { exit }
             on { print }' CHANGELOG.md > notes.md
-          [ -s notes.md ] || { echo "::error::CHANGELOG.md não tem a seção ## [$VERSION]"; exit 1; }
+          [ -s notes.md ] || { echo "::error::CHANGELOG.md has no ## [$VERSION] section"; exit 1; }
           cat >> notes.md <<NOTES
 
           ---
-          **Instalação:** requer kernel com as opções de [kernel/docker.config](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/kernel/docker.config) — veja [docs/INSTALACAO.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/INSTALACAO.md). Instale o zip pelo Magisk e reinicie.
+          **Install:** needs a kernel with the options in [kernel/docker.config](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/kernel/docker.config); see [docs/INSTALL.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/INSTALL.md) ([português](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/pt-BR/INSTALACAO.md)). Install the zip from Magisk (or MMRL: \`https://fortmea.github.io/docker-rosemary/\`) and reboot.
 
-          Docker Engine $DOCKER_VERSION · Docker Compose v$COMPOSE_VERSION · binários oficiais de download.docker.com e github.com/docker/compose ([licenças](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/THIRD_PARTY.md)).
+          Docker Engine $DOCKER_VERSION · Docker Compose v$COMPOSE_VERSION · official binaries from download.docker.com and github.com/docker/compose ([licenses](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/THIRD_PARTY.md)).
           NOTES
-      - name: Montar o módulo
+      - name: Build the module
         run: scripts/build-module.sh
       - uses: actions/download-artifact@v4
         with:
           name: kernel
           path: kernel-dist
-      - name: Notas do kernel
+      - name: Kernel notes
         run: |
           cat >> notes.md <<NOTES
 
-          **Kernel pronto:** \`rosemary-docker-Image.gz\` — $(cat kernel-dist/kernel-notes.md) Grave só o kernel dentro do boot do seu aparelho, nunca um boot.img de outra pessoa: [docs/KERNEL.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/KERNEL.md#1c-kernel-pronto-dos-releases). \`rosemary-docker.config\` é a configuração completa usada.
+          **Prebuilt kernel:** \`rosemary-docker-Image.gz\`. $(cat kernel-dist/kernel-notes.md) Flash only the kernel inside your own phone's boot, never someone else's boot.img: [docs/KERNEL.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/KERNEL.md#1c-prebuilt-kernel-from-releases). \`rosemary-docker.config\` is the full configuration used.
           NOTES
           rm kernel-dist/kernel-notes.md
-      - name: Publicar
+      - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" out/*.zip out/*.sha256 out/update.json kernel-dist/* \
             --title "Docker ${GITHUB_REF_NAME#v}" --notes-file notes.md --verify-tag
+
+  pages:
+    # Releases created with GITHUB_TOKEN do not trigger other workflows, so call it here.
+    needs: release
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

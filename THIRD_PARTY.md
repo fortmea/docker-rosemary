@@ -1,46 +1,48 @@
-# Código de terceiros
+# Third-party code
 
-Este repositório contém apenas scripts, o código do `docker-uidfw` e documentação (licença
-[MIT](LICENSE)). Nenhum binário de terceiros é commitado: eles são baixados das fontes
-oficiais durante a montagem, com SHA-256 fixado em [`versions.env`](versions.env), ou
-compilados pelo CI a partir do código oficial.
+**English** · [Português](THIRD_PARTY.pt-BR.md)
 
-## Incluído no zip do módulo (releases)
+This repository contains only scripts, the `docker-uidfw` source and documentation
+([MIT](LICENSE) license). No third-party binary is committed: they are downloaded from the
+official sources at build time, with SHA-256 pinned in [`versions.env`](versions.env), or
+built by CI from the official source.
 
-| Componente | Arquivos no zip | Origem | Licença |
+## Included in the module zip (releases)
+
+| Component | Files in the zip | Source | License |
 |---|---|---|---|
-| Docker Engine (Moby), CLI, `docker-proxy` | `bin/dockerd`, `bin/docker`, `bin/docker-proxy` | [download.docker.com/linux/static/stable/aarch64](https://download.docker.com/linux/static/stable/aarch64/) · código: [moby/moby](https://github.com/moby/moby), [docker/cli](https://github.com/docker/cli) | Apache-2.0 ([texto](licenses/Apache-2.0.txt), [NOTICE](licenses/NOTICE-moby.txt)) |
-| containerd, `ctr`, shim | `bin/containerd`, `bin/ctr`, `bin/containerd-shim-runc-v2` | mesmo tgz · [containerd/containerd](https://github.com/containerd/containerd) | Apache-2.0 |
-| runc | `bin/runc` | mesmo tgz · [opencontainers/runc](https://github.com/opencontainers/runc) | Apache-2.0 |
-| tini | `bin/docker-init` | mesmo tgz · [krallin/tini](https://github.com/krallin/tini) | MIT ([texto](licenses/MIT-tini.txt)) |
+| Docker Engine (Moby), CLI, `docker-proxy` | `bin/dockerd`, `bin/docker`, `bin/docker-proxy` | [download.docker.com/linux/static/stable/aarch64](https://download.docker.com/linux/static/stable/aarch64/) · code: [moby/moby](https://github.com/moby/moby), [docker/cli](https://github.com/docker/cli) | Apache-2.0 ([text](licenses/Apache-2.0.txt), [NOTICE](licenses/NOTICE-moby.txt)) |
+| containerd, `ctr`, shim | `bin/containerd`, `bin/ctr`, `bin/containerd-shim-runc-v2` | same tgz · [containerd/containerd](https://github.com/containerd/containerd) | Apache-2.0 |
+| runc | `bin/runc` | same tgz · [opencontainers/runc](https://github.com/opencontainers/runc) | Apache-2.0 |
+| tini | `bin/docker-init` | same tgz · [krallin/tini](https://github.com/krallin/tini) | MIT ([text](licenses/MIT-tini.txt)) |
 | Docker Compose | `cli-plugins/docker-compose` | [docker/compose releases](https://github.com/docker/compose/releases) | Apache-2.0 |
-| docker-uidfw | `bin/docker-uidfw` | compilado de [`uidfw/`](uidfw/) com a biblioteca padrão do Go ([licença BSD](https://go.dev/LICENSE)) | MIT |
+| docker-uidfw | `bin/docker-uidfw` | built from [`uidfw/`](uidfw/) with the Go standard library ([BSD license](https://go.dev/LICENSE)) | MIT |
 
-Os textos de licença vão dentro do zip em `licenses/`. "Docker" é marca da Docker, Inc.;
-este projeto não é afiliado nem endossado por ela.
+The license texts ship inside the zip under `licenses/`. "Docker" is a trademark of Docker,
+Inc.; this project is not affiliated with or endorsed by it.
 
-## Kernel compilado (releases)
+## Prebuilt kernel (releases)
 
-| Componente | Arquivos no release | Código-fonte correspondente | Licença |
+| Component | Files in the release | Corresponding source | License |
 |---|---|---|---|
-| Kernel Linux do LineageOS para MT6785 | `rosemary-docker-Image.gz`, `rosemary-docker.config` | [LineageOS/android_kernel_xiaomi_mt6785](https://github.com/LineageOS/android_kernel_xiaomi_mt6785), branch `lineage-24.0`, no commit indicado nas notas do release, com a configuração `rosemary-docker.config` (= `rosemary_defconfig` + [`kernel/docker.config`](kernel/docker.config)); compilado por [`kernel/build.sh`](kernel/build.sh) | GPL-2.0 (`rosemary-docker-kernel-COPYING` no release) |
+| LineageOS Linux kernel for MT6785 | `rosemary-docker-Image.gz`, `rosemary-docker.config` | [LineageOS/android_kernel_xiaomi_mt6785](https://github.com/LineageOS/android_kernel_xiaomi_mt6785), branch `lineage-24.0`, at the commit given in the release notes, with the configuration `rosemary-docker.config` (= `rosemary_defconfig` + [`kernel/docker.config`](kernel/docker.config)); built by [`kernel/build.sh`](kernel/build.sh) | GPL-2.0 with the Linux syscall note (`rosemary-docker-kernel-COPYING`, `-GPL-2.0` and `-Linux-syscall-note` in the release) |
 
-## Usado, mas não redistribuído
+## Used, but not redistributed
 
-| Componente | Uso | Origem | Licença |
+| Component | Use | Source | License |
 |---|---|---|---|
-| Clang r416183b | compilador do kernel | [LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b) | Apache-2.0 com exceção LLVM |
-| Ubuntu 22.04 + pacotes de build | imagem do contêiner de compilação ([`kernel/Dockerfile`](kernel/Dockerfile)) | Docker Hub `ubuntu` | várias (livres) |
-| Magisk / `magiskboot` | root e reempacotamento do boot | [topjohnwu/Magisk](https://github.com/topjohnwu/Magisk) | GPL-3.0 |
-| LineageOS | sistema do aparelho | [lineageos.org](https://lineageos.org) | Apache-2.0 e outras |
+| Clang r416183b | kernel compiler | [LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b) | Apache-2.0 with LLVM exception |
+| Ubuntu 22.04 + build packages | image of the build container ([`kernel/Dockerfile`](kernel/Dockerfile)) | Docker Hub `ubuntu` | various (free) |
+| Magisk / `magiskboot` | root and boot repacking | [topjohnwu/Magisk](https://github.com/topjohnwu/Magisk) | GPL-3.0 |
+| LineageOS | the phone's OS | [lineageos.org](https://lineageos.org) | Apache-2.0 and others |
 
-## Componentes proprietários
+## Proprietary components
 
-Nenhum componente proprietário é necessário nem distribuído. O boot reempacotado é o do
-próprio aparelho do usuário (ramdisk, DTB e cmdline são mantidos); firmwares e blobs do
-vendor continuam os que vieram com a ROM instalada. Desbloquear o bootloader exige a
-ferramenta oficial Mi Unlock da Xiaomi, obtida diretamente da Xiaomi.
+No proprietary component is needed or distributed. The repacked boot is the user's own
+phone's (ramdisk, DTB and cmdline are kept); vendor firmware and blobs stay the ones that
+came with the installed ROM. Unlocking the bootloader requires Xiaomi's official Mi Unlock
+tool, obtained directly from Xiaomi.
 
-Se você distribuir um `Image.gz`/`boot.img` compilado por você, a GPL-2.0 exige oferecer o
-código-fonte correspondente: aponte para o commit do LineageOS usado e para a configuração,
-como os releases deste projeto fazem.
+If you distribute an `Image.gz`/`boot.img` you built, GPL-2.0 requires offering the
+corresponding source: point to the LineageOS commit used and to the configuration, as this
+project's releases do.

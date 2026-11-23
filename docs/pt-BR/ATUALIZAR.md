@@ -1,6 +1,8 @@
 # Atualizar a versão do Docker
 
-As versões empacotadas ficam em [`versions.env`](../versions.env), com o SHA-256 de cada
+[English](../UPDATING.md) · **Português**
+
+As versões empacotadas ficam em [`versions.env`](../../versions.env), com o SHA-256 de cada
 download. Os binários vêm sempre das fontes oficiais:
 
 - Docker Engine: `https://download.docker.com/linux/static/stable/aarch64/docker-X.Y.Z.tgz`
@@ -11,7 +13,8 @@ download. Os binários vêm sempre das fontes oficiais:
 ## Para usuários: instalar uma versão nova
 
 Magisk → Módulos → **Atualizar** no módulo Docker, e reinicie (a partir do 29.10.0-4; o
-app consulta o `update.json` do último release).
+app consulta o `update.json` do último release). Se você adicionou o repositório no MMRL,
+atualize por lá.
 
 Ou à mão: baixe o zip novo nos [Releases](https://github.com/fortmea/docker-rosemary/releases),
 instale por cima pelo Magisk (não precisa remover o antigo) e reinicie.
@@ -63,19 +66,32 @@ Docker muda. Se só os scripts do módulo mudaram, incremente `MODULE_REVISION` 
 
 Depois:
 
-1. Instale o zip no aparelho e passe pelo [checklist de teste](../CONTRIBUTING.md#checklist-de-teste-no-aparelho).
-2. Adicione a seção da versão no [`CHANGELOG.md`](../CHANGELOG.md) (o título deve ser
+1. Instale o zip no aparelho e passe pelo [checklist de teste](../../CONTRIBUTING.pt-BR.md#checklist-de-teste-no-aparelho).
+2. Adicione a seção da versão no [`CHANGELOG.md`](../../CHANGELOG.md) (o título deve ser
    `## [<docker>-<rev>]`, por exemplo `## [29.11.0-1]`).
 3. Abra um PR. Depois do merge, crie a tag — o workflow
-   [`release.yml`](../.github/workflows/release.yml) compila o kernel (~40 min) e o zip e
-   publica o release com as notas do changelog e o `update.json` que o app Magisk lê:
+   [`release.yml`](../../.github/workflows/release.yml) compila o kernel (~15 min) e o zip,
+   publica o release com as notas do changelog e o `update.json` que o app Magisk lê e, por
+   fim, republica a página inicial e o repositório MMRL
+   ([`pages.yml`](../../.github/workflows/pages.yml)):
    ```sh
    git tag v29.11.0-1 && git push origin v29.11.0-1
    ```
 
 O workflow recusa a tag se ela não bater com `versions.env` ou se faltar a seção no changelog.
 
+## Página inicial e repositório MMRL
+
+[`site/`](../../site/) tem a página inicial. `scripts/build-site.py` a copia e gera
+`json/modules.json` (o índice do repositório MMRL) e um changelog por versão a partir dos
+releases do GitHub e do `CHANGELOG.md`. Para ver localmente:
+
+```sh
+GH_TOKEN=$(gh auth token) python3 scripts/build-site.py _site
+python3 -m http.server -d _site 8000
+```
+
 ## Atualizar o Go do docker-uidfw
 
-Mude a linha `go` em [`uidfw/go.mod`](../uidfw/go.mod) e rode `go test ./...` em `uidfw/`.
+Mude a linha `go` em [`uidfw/go.mod`](../../uidfw/go.mod) e rode `go test ./...` em `uidfw/`.
 O CI usa a mesma versão.

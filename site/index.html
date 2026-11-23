@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker on rosemary</title>
+<meta name="description" content="Official Docker Engine and Compose running natively on the Xiaomi Redmi Note 10S (rosemary) with LineageOS: Magisk module, kernel and docs.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root {
+  --bg: #f7f8fa; --surface: #ffffff; --text: #16181d; --muted: #5b6270; --border: #e2e5ea;
+  --accent: #1d63ed; --accent-text: #ffffff; --code-bg: #eef1f5; --ok: #1a7f37;
+  --radius: 12px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115; --surface: #171a21; --text: #e7e9ee; --muted: #9aa2b1; --border: #2a2f3a;
+    --accent: #4d8bff; --accent-text: #0b0d12; --code-bg: #1f232c; --ok: #3fb950;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .9em; background: var(--code-bg); padding: .1em .35em; border-radius: 5px; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+header { border-bottom: 1px solid var(--border); background: var(--surface); }
+header .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; color: var(--text); text-decoration: none; }
+.brand img { width: 28px; height: 28px; }
+nav { display: flex; align-items: center; gap: 16px; font-size: 15px; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { color: var(--text); }
+.lang { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 14px; cursor: pointer; }
+.hero { padding: 56px 0 32px; }
+.hero h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.15; margin: 0 0 14px; letter-spacing: -.01em; }
+.hero p { font-size: 18px; color: var(--muted); max-width: 680px; margin: 0 0 24px; }
+.pill { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px; margin-bottom: 18px; background: var(--surface); }
+.pill b { color: var(--ok); font-weight: 600; }
+.buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-block; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; border: 1px solid var(--border); color: var(--text); background: var(--surface); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+section { padding: 28px 0; }
+h2 { font-size: 24px; margin: 0 0 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.mmrl { display: grid; gap: 12px; }
+.copy { display: flex; gap: 8px; flex-wrap: wrap; }
+.copy input { flex: 1 1 260px; min-width: 0; font: 15px var(--mono); padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--code-bg); color: var(--text); }
+.copy button { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; }
+.muted { color: var(--muted); }
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 0; display: grid; gap: 12px; }
+ol.steps li { counter-increment: s; position: relative; padding: 16px 16px 16px 60px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 16px; top: 16px; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+ol.steps h3 { margin: 0 0 4px; font-size: 17px; }
+ol.steps p { margin: 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.grid h3 { margin: 0 0 6px; font-size: 16px; }
+.grid p { margin: 0; color: var(--muted); font-size: 15px; }
+pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 14px; overflow-x: auto; font: 14px/1.5 var(--mono); }
+ul.plain { margin: 0; padding-left: 20px; }
+ul.plain li { margin: 4px 0; }
+.warn { border-left: 4px solid #d29922; }
+footer { border-top: 1px solid var(--border); margin-top: 32px; padding: 24px 0 40px; font-size: 14px; color: var(--muted); }
+@media (max-width: 560px) {
+  nav a.hide-sm { display: none; }
+  .hero { padding-top: 36px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="./"><img src="icon.svg" alt="" width="28" height="28">docker-rosemary</a>
+    <nav>
+      <a class="hide-sm" href="#start" data-i18n="nav_start">Get started</a>
+      <a class="hide-sm" data-doc="docs" href="https://github.com/fortmea/docker-rosemary/tree/main/docs" data-i18n="nav_docs">Docs</a>
+      <a href="https://github.com/fortmea/docker-rosemary">GitHub</a>
+      <button class="lang" id="lang" type="button" aria-label="Mudar para português">PT</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="pill"><span data-i18n="latest">Latest release</span> <b id="ver">—</b></div>
+    <h1 data-i18n="title">Docker, natively, on your Redmi Note 10S</h1>
+    <p data-i18n="lead">The official Docker Engine and Docker Compose running on the Xiaomi rosemary (Helio G95 / MT6785) with LineageOS and root. No Termux, no chroot, no virtual machine.</p>
+    <div class="buttons">
+      <a class="btn primary" href="https://github.com/fortmea/docker-rosemary/releases/latest" data-i18n="btn_download">Download</a>
+      <a class="btn" data-doc="install" href="https://github.com/fortmea/docker-rosemary/blob/main/docs/INSTALL.md" data-i18n="btn_guide">Installation guide</a>
+    </div>
+  </div>
+
+  <section id="mmrl">
+    <h2 data-i18n="mmrl_title">Install with MMRL</h2>
+    <div class="card mmrl">
+      <p style="margin:0" data-i18n-html="mmrl_text">In <a href="https://github.com/MMRLApp/MMRL">MMRL</a>, open <b>Repositories → Add</b> and paste this URL. The <b>Docker</b> module shows up in the list, and MMRL handles installs and updates.</p>
+      <div class="copy">
+        <input id="repo" readonly value="https://fortmea.github.io/docker-rosemary/" aria-label="MMRL repository URL">
+        <button id="copy" type="button" data-i18n="copy">Copy</button>
+      </div>
+      <p class="muted" style="margin:0;font-size:14px" data-i18n="mmrl_note">The Magisk app also updates the module on its own once it is installed.</p>
+    </div>
+  </section>
+
+  <section id="start">
+    <h2 data-i18n="start_title">Get started</h2>
+    <ol class="steps">
+      <li class="card">
+        <h3 data-i18n="s1_t">Flash a Docker-ready kernel</h3>
+        <p data-i18n-html="s1_p">Stock LineageOS lacks six options Docker needs. Every release ships a prebuilt kernel (<code>rosemary-docker-Image.gz</code>) that you swap into your own boot image. <a data-doc="kernel" href="https://github.com/fortmea/docker-rosemary/blob/main/docs/KERNEL.md">Kernel guide</a></p>
+      </li>
+      <li class="card">
+        <h3 data-i18n="s2_t">Install the module</h3>
+        <p data-i18n="s2_p">From MMRL, or download the zip and install it in Magisk → Modules. The installer checks the kernel and refuses incompatible ones.</p>
+      </li>
+      <li class="card">
+        <h3 data-i18n="s3_t">Reboot and run</h3>
+        <p data-i18n="s3_p">Docker starts on boot. Open a root shell and use it like on any Linux machine.</p>
+      </li>
+    </ol>
+    <pre style="margin-top:12px"><code>su
+dockerctl status
+docker run --rm hello-world
+docker compose up -d</code></pre>
+  </section>
+
+  <section>
+    <h2 data-i18n="how_title">How it works</h2>
+    <div class="grid">
+      <div class="card"><h3 data-i18n="h1_t">Own mount namespace</h3><p data-i18n="h1_p">dockerd runs in a private namespace with a writable /run and /etc. Android's own filesystem is left untouched.</p></div>
+      <div class="card"><h3 data-i18n="h2_t">Policy routing and DNS</h3><p data-i18n="h2_p">Rules for Docker's address pool follow the active Wi-Fi or mobile connection, and DNS follows the current network.</p></div>
+      <div class="card"><h3 data-i18n="h3_t">eBPF firewall aware</h3><p data-i18n="h3_p">docker-uidfw lets container users through Android's per-UID firewall, never installed apps.</p></div>
+      <div class="card"><h3 data-i18n="h4_t">Hotspot keeps working</h3><p data-i18n="h4_p">Docker does not change the FORWARD policy, so tethering and the hotspot are unaffected.</p></div>
+      <div class="card"><h3 data-i18n="h5_t">Official binaries</h3><p data-i18n="h5_p">Static builds from download.docker.com and Docker Compose releases, with pinned SHA-256.</p></div>
+      <div class="card"><h3 data-i18n="h6_t">Plays well with others</h3><p data-i18n="h6_p">Docker's networks skip the Droidspaces range, so both can run side by side.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-i18n="req_title">Requirements and limits</h2>
+    <div class="grid">
+      <div class="card">
+        <h3 data-i18n="req_t">You need</h3>
+        <ul class="plain">
+          <li data-i18n="r1">Redmi Note 10S / Poco M5s (rosemary)</li>
+          <li data-i18n="r2">Unlocked bootloader and LineageOS 24</li>
+          <li data-i18n="r3">Magisk (KernelSU and APatch are detected)</li>
+          <li data-i18n="r4">~250 MB plus space for your images</li>
+        </ul>
+      </div>
+      <div class="card warn">
+        <h3 data-i18n="lim_t">Good to know</h3>
+        <ul class="plain">
+          <li data-i18n="l1">arm64 images only (no amd64 emulation)</li>
+          <li data-i18n="l2">No Swarm or overlay networks</li>
+          <li data-i18n="l3">LineageOS updates replace the kernel: flash it again afterwards</li>
+          <li data-i18n="l4">Always keep a backup of your boot image</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p data-i18n-html="foot">MIT licensed. Docker, Compose and the Linux kernel are third-party software under their own licenses (<a data-doc="third" href="https://github.com/fortmea/docker-rosemary/blob/main/THIRD_PARTY.md">details</a>). Unofficial project, not affiliated with Docker Inc., Xiaomi or LineageOS.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var GH = "https://github.com/fortmea/docker-rosemary/";
+  var DOCS = {
+    en: { docs: "tree/main/docs", install: "blob/main/docs/INSTALL.md", kernel: "blob/main/docs/KERNEL.md", third: "blob/main/THIRD_PARTY.md" },
+    pt: { docs: "tree/main/docs/pt-BR", install: "blob/main/docs/pt-BR/INSTALACAO.md", kernel: "blob/main/docs/pt-BR/KERNEL.md", third: "blob/main/THIRD_PARTY.pt-BR.md" }
+  };
+  var PT = {
+    nav_start: "Começar", nav_docs: "Documentação", latest: "Último release",
+    title: "Docker, nativo, no seu Redmi Note 10S",
+    lead: "Docker Engine e Docker Compose oficiais rodando no Xiaomi rosemary (Helio G95 / MT6785) com LineageOS e root. Sem Termux, sem chroot e sem máquina virtual.",
+    btn_download: "Baixar", btn_guide: "Guia de instalação",
+    mmrl_title: "Instalar pelo MMRL",
+    mmrl_text: 'No <a href="https://github.com/MMRLApp/MMRL">MMRL</a>, abra <b>Repositórios → Adicionar</b> e cole esta URL. O módulo <b>Docker</b> aparece na lista e o MMRL cuida da instalação e das atualizações.',
+    copy: "Copiar", copied: "Copiado!",
+    mmrl_note: "Depois de instalado, o app Magisk também atualiza o módulo sozinho.",
+    start_title: "Começar",
+    s1_t: "Grave um kernel pronto para Docker",
+    s1_p: 'O LineageOS padrão não tem seis opções de que o Docker precisa. Cada release traz um kernel compilado (<code>rosemary-docker-Image.gz</code>) que você coloca dentro do seu próprio boot. <a data-doc="kernel" href="#">Guia do kernel</a>',
+    s2_t: "Instale o módulo",
+    s2_p: "Pelo MMRL, ou baixe o zip e instale em Magisk → Módulos. O instalador confere o kernel e recusa os incompatíveis.",
+    s3_t: "Reinicie e use",
+    s3_p: "O Docker inicia no boot. Abra um shell root e use como em qualquer Linux.",
+    how_title: "Como funciona",
+    h1_t: "Mount namespace próprio", h1_p: "O dockerd roda num namespace privado com /run e /etc graváveis. O sistema de arquivos do Android não é alterado.",
+    h2_t: "Rotas e DNS automáticos", h2_p: "As regras do pool de endereços do Docker acompanham a conexão ativa (Wi-Fi ou dados), e o DNS acompanha a rede atual.",
+    h3_t: "Compatível com o firewall eBPF", h3_p: "O docker-uidfw libera os usuários dos contêineres no firewall por UID do Android, nunca apps instalados.",
+    h4_t: "Hotspot continua funcionando", h4_p: "O Docker não muda a política FORWARD, então ancoragem e hotspot não são afetados.",
+    h5_t: "Binários oficiais", h5_p: "Builds estáticos de download.docker.com e dos releases do Docker Compose, com SHA-256 fixado.",
+    h6_t: "Convive com outros", h6_p: "As redes do Docker pulam a faixa do Droidspaces, então os dois rodam juntos.",
+    req_title: "Requisitos e limites", req_t: "Você precisa de",
+    r1: "Redmi Note 10S / Poco M5s (rosemary)", r2: "Bootloader desbloqueado e LineageOS 24",
+    r3: "Magisk (KernelSU e APatch são detectados)", r4: "~250 MB mais o espaço das suas imagens",
+    lim_t: "Bom saber", l1: "Só imagens arm64 (sem emulação amd64)", l2: "Sem Swarm nem redes overlay",
+    l3: "Atualizações do LineageOS trocam o kernel: grave de novo depois", l4: "Sempre guarde um backup do seu boot",
+    foot: 'Licença MIT. Docker, Compose e o kernel Linux são de terceiros, com licenças próprias (<a data-doc="third" href="#">detalhes</a>). Projeto não oficial, sem relação com Docker Inc., Xiaomi ou LineageOS.'
+  };
+  var EN = {};
+  document.querySelectorAll("[data-i18n]").forEach(function (el) { EN[el.dataset.i18n] = el.textContent; });
+  document.querySelectorAll("[data-i18n-html]").forEach(function (el) { EN[el.dataset.i18nHtml] = el.innerHTML; });
+  EN.copied = "Copied!";
+
+  var lang = "en";
+  function apply(l) {
+    lang = l;
+    var dict = l === "pt" ? PT : EN;
+    document.documentElement.lang = l === "pt" ? "pt-BR" : "en";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = dict[el.dataset.i18n]; });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) { el.innerHTML = dict[el.dataset.i18nHtml]; });
+    document.querySelectorAll("[data-doc]").forEach(function (el) { el.href = GH + DOCS[l][el.dataset.doc]; });
+    var b = document.getElementById("lang");
+    b.textContent = l === "pt" ? "EN" : "PT";
+    b.setAttribute("aria-label", l === "pt" ? "Switch to English" : "Mudar para português");
+  }
+  var q = new URLSearchParams(location.search).get("lang");
+  var saved = null;
+  try { saved = localStorage.getItem("lang"); } catch (e) {}
+  apply(q === "pt" || q === "en" ? q : (saved === "pt" ? "pt" : "en"));
+
+  document.getElementById("lang").addEventListener("click", function () {
+    var l = lang === "pt" ? "en" : "pt";
+    apply(l);
+    try { localStorage.setItem("lang", l); } catch (e) {}
+  });
+
+  document.getElementById("copy").addEventListener("click", function () {
+    var input = document.getElementById("repo"), btn = this;
+    function done() {
+      btn.textContent = (lang === "pt" ? PT : EN).copied;
+      setTimeout(function () { btn.textContent = (lang === "pt" ? PT : EN).copy; }, 1500);
+    }
+    if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(done, function () { input.select(); });
+    else { input.select(); try { document.execCommand("copy"); done(); } catch (e) {} }
+  });
+
+  fetch("json/modules.json").then(function (r) { return r.json(); }).then(function (j) {
+    var v = j.modules[0].version;
+    var el = document.getElementById("ver");
+    el.textContent = v;
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>

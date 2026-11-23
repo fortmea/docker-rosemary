@@ -1,5 +1,7 @@
 # Problemas frequentes
 
+[English](../TROUBLESHOOTING.md) · **Português**
+
 Antes de tudo, colete:
 
 ```sh
@@ -20,7 +22,7 @@ Ao abrir uma issue, cole essas saídas ([modelo de bug](https://github.com/fortm
 
 O kernel em execução não tem as opções listadas. Compile e grave o kernel conforme
 [KERNEL.md](KERNEL.md). Se você já gravou e o erro continua, confira `uname -r` (deve
-terminar em `-docker`) — o aparelho pode ter iniciado pelo outro slot ou uma OTA trocou o boot.
+conter `-docker`) — o aparelho pode ter iniciado pelo outro slot ou uma OTA trocou o boot.
 
 ### `docker: rode como root (su -c docker ...)`
 
@@ -124,6 +126,13 @@ docker system prune -a --volumes   # CUIDADO: apaga também volumes não usados
 Cabos/hubs USB instáveis derrubam a conexão. Use ADB por Wi-Fi
 (`adb tcpip 5555 && adb connect <ip>:5555`) ou um terminal no próprio aparelho.
 O Docker continua rodando independente do `adb`.
+
+### Redes do Docker colidem com o Droidspaces (`172.28.x.x`)
+
+Desde o 29.10.0-4 o `daemon.json` do módulo deixa `172.28.0.0/16` fora do pool do Docker.
+Instalações anteriores mantêm o `/data/docker/daemon.json` antigo: copie
+`default-address-pools` de `/data/adb/modules/docker/daemon.json` para ele e rode
+`dockerctl restart`.
 
 ---
 

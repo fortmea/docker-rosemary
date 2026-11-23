@@ -1,46 +1,52 @@
-# Docker no Xiaomi rosemary
+# Docker on Xiaomi rosemary
 
-Docker Engine e Docker Compose oficiais rodando nativamente no **Redmi Note 10S / Poco M5s
-(codinome `rosemary`, MediaTek Helio G95 / MT6785)** com LineageOS e root — sem Termux,
-sem chroot e sem máquina virtual.
+**English** · [Português](README.pt-BR.md) · [Homepage](https://fortmea.github.io/docker-rosemary/)
 
-O projeto tem duas partes:
+The official Docker Engine and Docker Compose running natively on the **Redmi Note 10S / Poco M5s
+(codename `rosemary`, MediaTek Helio G95 / MT6785)** with LineageOS and root. No Termux,
+no chroot, no virtual machine.
 
-| Parte | O que é | Onde |
+The project has two parts:
+
+| Part | What it is | Where |
 |---|---|---|
-| **Kernel** | O kernel padrão do LineageOS não tem algumas opções exigidas pelo Docker. Há um fragmento de configuração, um script que compila o kernel a partir do código oficial do LineageOS e o kernel já compilado em cada release. | [`kernel/`](kernel/), [docs/KERNEL.md](docs/KERNEL.md) |
-| **Módulo Magisk** | Binários estáticos oficiais do Docker (`download.docker.com`) + Compose + scripts que adaptam o Docker ao Android (mount namespace, rotas, DNS, firewall eBPF). | [`module/`](module/), [`uidfw/`](uidfw/) |
+| **Kernel** | The stock LineageOS kernel lacks a few options Docker needs. There is a config fragment, a script that builds the kernel from the official LineageOS source, and a prebuilt kernel in every release. | [`kernel/`](kernel/), [docs/KERNEL.md](docs/KERNEL.md) |
+| **Magisk module** | Official static Docker binaries (`download.docker.com`) + Compose + scripts that adapt Docker to Android (mount namespace, routing, DNS, eBPF firewall). | [`module/`](module/), [`uidfw/`](uidfw/) |
 
-O zip do módulo e o kernel compilado estão nos [Releases](https://github.com/fortmea/docker-rosemary/releases).
-Depois de instalado, o módulo recebe atualizações pelo próprio app Magisk.
+The module zip and the prebuilt kernel are in [Releases](https://github.com/fortmea/docker-rosemary/releases).
+Once installed, the module gets updates through the Magisk app itself.
 
-## Estado
+**MMRL:** add the repository `https://fortmea.github.io/docker-rosemary/` in
+[MMRL](https://github.com/MMRLApp/MMRL) (Repositories → Add) to install and update from there.
 
-Testado no aparelho com:
+## Status
 
-- LineageOS 24 (nightly 2026-11-04), slot A/B
-- Magisk 31.1 (o módulo também detecta KernelSU e APatch)
-- Kernel `4.19.325` do LineageOS (`lineage-24.0`) + [`kernel/docker.config`](kernel/docker.config)
-- Docker Engine 29.10.0, Compose v5.8.0 — imagens arm64, redes bridge, portas publicadas,
+Tested on the device with:
+
+- LineageOS 24 (nightly 2026-11-04), A/B slots
+- Magisk 31.1 (the module also detects KernelSU and APatch)
+- LineageOS kernel `4.19.325` (`lineage-24.0`) + [`kernel/docker.config`](kernel/docker.config)
+- Docker Engine 29.10.0, Compose v5.8.0: arm64 images, bridge networks, published ports,
   volumes, `docker compose`, Portainer, Nextcloud AIO
 
-## Início rápido
+## Quick start
 
-> Requer bootloader desbloqueado, LineageOS instalado e Magisk funcionando.
-> Trocar o kernel pode deixar o aparelho sem iniciar se feito errado: **faça backup do boot**.
-> Siga o passo a passo completo em [docs/INSTALACAO.md](docs/INSTALACAO.md).
+> Requires an unlocked bootloader, LineageOS and a working Magisk.
+> Swapping the kernel can leave the phone unbootable if done wrong: **back up boot first**.
+> Follow the full guide in [docs/INSTALL.md](docs/INSTALL.md).
 
-1. Verifique se o kernel atual já serve (normalmente **não**, no LineageOS padrão):
+1. Check whether the running kernel already works (usually it does **not** on stock LineageOS):
    ```sh
    adb shell su -c 'zcat /proc/config.gz' | grep -E 'CONFIG_(SYSVIPC|POSIX_MQUEUE|IPC_NS|CGROUP_PIDS|CGROUP_DEVICE|NETFILTER_XT_MATCH_ADDRTYPE)='
    ```
-   Se faltar alguma das 6 linhas, grave um kernel com as opções de
-   [`kernel/docker.config`](kernel/docker.config): o `rosemary-docker-Image.gz` pronto dos
-   Releases, ou compilado por você (script em contêiner ou manual). Veja
+   If any of the 6 lines is missing, flash a kernel with the options in
+   [`kernel/docker.config`](kernel/docker.config): the prebuilt `rosemary-docker-Image.gz`
+   from Releases, or one you build yourself (container script or by hand). See
    [docs/KERNEL.md](docs/KERNEL.md).
-2. Baixe `docker-magisk-<versão>.zip` dos Releases e instale pelo app Magisk
-   (Módulos → Instalar do armazenamento). O instalador recusa kernels incompatíveis.
-3. Reinicie e teste:
+2. Download `docker-magisk-<version>.zip` from Releases (or install it from MMRL) and install
+   it in the Magisk app (Modules → Install from storage). The installer refuses incompatible
+   kernels.
+3. Reboot and test:
    ```sh
    adb shell
    su
@@ -48,78 +54,81 @@ Testado no aparelho com:
    docker run --rm hello-world
    ```
 
-## Uso
+## Usage
 
-Todos os comandos rodam como root (`su`):
+All commands run as root (`su`):
 
-| Comando | Função |
+| Command | Purpose |
 |---|---|
-| `docker ...`, `docker compose ...` | CLI normal do Docker |
-| `dockerctl start\|stop\|restart` | controla o `dockerd` |
-| `dockerctl status` | estado e contêineres em execução |
-| `dockerctl logs [n]` | últimas linhas de `/data/docker/log/dockerd.log` |
-| `dockerctl net` | reaplica as regras de rota (também é feito a cada 15 s) |
+| `docker ...`, `docker compose ...` | the regular Docker CLI |
+| `dockerctl start\|stop\|restart` | controls `dockerd` |
+| `dockerctl status` | state and running containers |
+| `dockerctl logs [n]` | last lines of `/data/docker/log/dockerd.log` |
+| `dockerctl net` | re-applies the routing rules (also done every 15 s) |
 
-Arquivos no aparelho:
+Files on the device:
 
-- `/data/docker/lib` — imagens, volumes, contêineres (mantido ao desinstalar o módulo)
-- `/data/docker/daemon.json` — configuração do daemon (copiada do módulo só na primeira vez)
-- `/data/docker/log/` — `dockerd.log`, `uidfw.log`
-- `/data/docker/run/docker.sock` — socket no Android; os contêineres veem o caminho padrão
-  `/var/run/docker.sock`, então arquivos compose comuns (Portainer etc.) funcionam sem mudança.
+- `/data/docker/lib`: images, volumes, containers (kept when the module is uninstalled)
+- `/data/docker/daemon.json`: daemon configuration (copied from the module only the first time)
+- `/data/docker/log/`: `dockerd.log`, `uidfw.log`
+- `/data/docker/run/docker.sock`: the socket on Android. Containers see the standard path
+  `/var/run/docker.sock`, so ordinary compose files (Portainer etc.) work unchanged.
 
-Portas publicadas (`-p 8080:80`) ficam acessíveis no IP do aparelho na rede local.
-O daemon não escuta em TCP por padrão; para controlá-lo pela rede, adicione um host `tcp://`
-**com TLS** em `/data/docker/daemon.json` (veja a
-[documentação do Docker](https://docs.docker.com/engine/security/protect-access/)).
+Published ports (`-p 8080:80`) are reachable on the phone's IP on the local network.
+The daemon does not listen on TCP by default. To control it over the network, add a `tcp://`
+host **with TLS** to `/data/docker/daemon.json` (see the
+[Docker documentation](https://docs.docker.com/engine/security/protect-access/)).
 
-## Como funciona
+## How it works
 
-O Android não é uma distribuição Linux comum; o módulo resolve as diferenças assim:
+Android is not a regular Linux distribution. The module bridges the differences like this:
 
-- **Raiz somente leitura** — `nsroot.sh` executa o `dockerd` num mount namespace privado
-  (`unshare -m`) cuja raiz espelha a do Android (rbind) e acrescenta `/run`, `/var/run` e
-  `/etc` graváveis (o `dockerd` usa `/run/docker` fixo e precisa de `/etc/resolv.conf`).
-  Nada muda no namespace do próprio Android.
-- **cgroup v2** — se o Android não montar cgroup2 em `/sys/fs/cgroup`, ele é montado dentro
-  do namespace do Docker.
-- **Roteamento por políticas** — o Android descarta tráfego encaminhado das bridges
-  (`32000: unreachable`). `net.sh` adiciona regras `ip rule` para `172.16.0.0/12` (o pool de
-  endereços do Docker) apontando para a tabela da conexão ativa, e as reaplica a cada 15 s
-  (reconexões de Wi-Fi recriam as tabelas). O pool deixa de fora `172.28.0.0/16`, a faixa
-  NAT padrão do Droidspaces, para os dois poderem rodar juntos.
-- **DNS** — `net.sh` mantém `/data/docker/resolv.conf` com os DNS da rede atual
-  (`dumpsys connectivity`) e reservas públicas.
-- **Firewall eBPF por UID** — o Android bloqueia tráfego de qualquer UID ≥ 10000 que não seja
-  um app liberado (modo de rede restrita, segundo plano, soneca). Processos de contêiner
-  rodando como, por exemplo, UID 65532 ficam sem rede. `docker-uidfw` ([`uidfw/`](uidfw/))
-  dá os bits de permissão no `uid_owner_map` do netd apenas aos UIDs de processos dentro do
-  cgroup `docker`, nunca a UIDs de apps instalados.
-- **Ponto de acesso / ancoragem** — `ip-forward-no-drop` em `daemon.json` impede o Docker de
-  mudar a política FORWARD para DROP, o que quebraria o hotspot.
-- **Certificados** — `SSL_CERT_DIR` aponta para o repositório de CAs do Android.
+- **Read-only root**: `nsroot.sh` runs `dockerd` in a private mount namespace
+  (`unshare -m`) whose root mirrors Android's (rbind) plus writable `/run`, `/var/run` and
+  `/etc` (`dockerd` hardcodes `/run/docker` and needs `/etc/resolv.conf`).
+  Nothing changes in Android's own namespace.
+- **cgroup v2**: if Android does not mount cgroup2 at `/sys/fs/cgroup`, it is mounted inside
+  Docker's namespace.
+- **Policy routing**: Android drops traffic forwarded from bridges (`32000: unreachable`).
+  `net.sh` adds `ip rule` entries for `172.16.0.0/12` (Docker's address pool) pointing at the
+  active connection's table and re-applies them every 15 s (Wi-Fi reconnects recreate the
+  tables). The pool leaves out `172.28.0.0/16`, Droidspaces' default NAT range, so both can
+  run side by side.
+- **DNS**: `net.sh` keeps `/data/docker/resolv.conf` filled with the current network's DNS
+  servers (`dumpsys connectivity`) plus public fallbacks.
+- **Per-UID eBPF firewall**: Android blocks traffic from any UID ≥ 10000 that is not an
+  allowed app (restricted networking, background, doze). Container processes running as,
+  say, UID 65532 end up offline. `docker-uidfw` ([`uidfw/`](uidfw/)) sets the permission bits
+  in netd's `uid_owner_map` only for UIDs of processes inside the `docker` cgroup, never for
+  UIDs of installed apps.
+- **Hotspot / tethering**: `ip-forward-no-drop` in `daemon.json` stops Docker from switching
+  the FORWARD policy to DROP, which would break the hotspot.
+- **Certificates**: `SSL_CERT_DIR` points at Android's CA store.
 
-## Limitações conhecidas
+## Known limitations
 
-- Apenas imagens **arm64** (`linux/arm64`). O kernel não tem `BINFMT_MISC`, então não há
-  emulação amd64 via QEMU.
-- Docker Swarm / redes overlay não funcionam (`VXLAN`, `IP_VS` ausentes).
-- Atualizações OTA do LineageOS trocam o boot e **removem o kernel customizado**; refaça
-  o procedimento do kernel após cada atualização ([docs/KERNEL.md](docs/KERNEL.md#após-uma-atualização-do-lineageos)).
-- Outros aparelhos arm64 podem funcionar (nada no módulo é específico do rosemary), mas só o
-  rosemary é testado.
+- **arm64** images only (`linux/arm64`). The kernel has no `BINFMT_MISC`, so there is no amd64
+  emulation through QEMU.
+- Docker Swarm / overlay networks do not work (`VXLAN`, `IP_VS` are missing).
+- LineageOS OTA updates replace boot and **remove the custom kernel**. Redo the kernel step
+  after every update ([docs/KERNEL.md](docs/KERNEL.md#after-a-lineageos-update)).
+- Other arm64 phones may work (nothing in the module is rosemary-specific), but only rosemary
+  is tested.
+- Messages from the installer and `dockerctl` are in Portuguese.
 
-## Documentação
+## Documentation
 
-- [Instalação completa](docs/INSTALACAO.md)
-- [Kernel: compilar, gravar e reverter](docs/KERNEL.md)
-- [Atualizar a versão do Docker](docs/ATUALIZAR.md)
-- [Problemas frequentes](docs/PROBLEMAS.md)
-- [Como contribuir](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
-- [Código de terceiros e licenças](THIRD_PARTY.md)
+- [Full installation](docs/INSTALL.md)
+- [Kernel: download, build, flash and revert](docs/KERNEL.md)
+- [Updating Docker](docs/UPDATING.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+- [Third-party code and licenses](THIRD_PARTY.md)
 
-## Licença
+Portuguese versions: [docs/pt-BR/](docs/pt-BR/).
 
-Scripts e código deste repositório: [MIT](LICENSE). Docker, Compose e o kernel são de
-terceiros, com licenças próprias — veja [THIRD_PARTY.md](THIRD_PARTY.md).
-Projeto não oficial, sem relação com Docker Inc., Xiaomi ou LineageOS.
+## License
+
+Scripts and code in this repository: [MIT](LICENSE). Docker, Compose and the kernel are
+third-party software with their own licenses; see [THIRD_PARTY.md](THIRD_PARTY.md).
+Unofficial project, not affiliated with Docker Inc., Xiaomi or LineageOS.

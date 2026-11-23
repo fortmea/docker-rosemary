@@ -1,23 +1,23 @@
-## O que muda
+## What changes
 
-<!-- Descreva a mudança e o motivo. Referencie a issue: "Fecha #123". -->
+<!-- Describe the change and why. Reference the issue: "Closes #123". English or Portuguese. -->
 
-## Tipo
+## Type
 
-- [ ] Correção
-- [ ] Funcionalidade
-- [ ] Atualização de versão (Docker/Compose/Go)
-- [ ] Documentação
+- [ ] Fix
+- [ ] Feature
+- [ ] Version bump (Docker/Compose/Go)
+- [ ] Documentation
 - [ ] Kernel
 
-## Testado em
+## Tested on
 
-<!-- Aparelho, ROM/versão, gerenciador de root. "Não testado no aparelho" se for o caso. -->
+<!-- Phone, ROM/version, root manager. "Not tested on the phone" if that is the case. -->
 
 ## Checklist
 
-- [ ] Sem binários commitados
-- [ ] Scripts de `module/` compatíveis com `sh` do Android (sem bash-ismos)
-- [ ] `go test ./...` em `uidfw/` e `scripts/build-module.sh` passam
-- [ ] [Checklist de teste no aparelho](../blob/main/CONTRIBUTING.md#checklist-de-teste-no-aparelho) (mudanças em módulo/uidfw/kernel/versões)
-- [ ] Documentação e `CHANGELOG.md` atualizados
+- [ ] No binaries committed
+- [ ] `module/` scripts compatible with Android's `sh` (no bashisms)
+- [ ] `go test ./...` in `uidfw/` and `scripts/build-module.sh` pass
+- [ ] [On-device test checklist](../blob/main/CONTRIBUTING.md#on-device-test-checklist) (changes to module/uidfw/kernel/versions)
+- [ ] Documentation (English and Portuguese) and `CHANGELOG.md` updated

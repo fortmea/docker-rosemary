@@ -1,24 +1,24 @@
-name: Sugestão
-description: Nova funcionalidade ou melhoria
+name: Suggestion
+description: New feature or improvement / Nova funcionalidade ou melhoria
 labels: [enhancement]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Problema
-      description: Que necessidade isto resolve? O que você tentou fazer e não conseguiu?
+      label: Problem
+      description: What need does this address? What did you try to do and could not?
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Proposta
-      description: Como você imagina a solução? Alternativas consideradas?
+      label: Proposal
+      description: How do you picture the solution? Alternatives considered?
     validations:
       required: true
   - type: checkboxes
     id: help
     attributes:
-      label: Contribuição
+      label: Contribution
       options:
-        - label: Posso implementar e testar no aparelho
+        - label: I can implement it and test it on the phone
